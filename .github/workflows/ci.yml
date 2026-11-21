@@ -20,7 +20,7 @@ jobs:
             node manifold/cli.mjs validate "$f"
           done
       - name: the contract must refuse lies (fixtures)
-        run: node --test tests/
+        run: node --test tests/*.test.mjs
       - name: render must produce pages, not promises
         run: |
           node manifold/cli.mjs render schools/lotus.yaml

@@ -5,11 +5,13 @@
  * Mutation fixtures are structuredClone()s of the parsed lotus manifest —
  * nobody hand-writes a second full manifest in here.
  *
- * Two tests are CHARACTERIZATION tests: core.mjs is frozen for this zone, so
- * where it disagrees with the contract's intent (/desk ignores price.published;
- * the home heading double-pluralizes) the suite records the current behavior
- * loudly. Fixing core flips those tests; that flip is the reminder to update
- * the requirement text, not to silently rewrite the suite.
+ * Two tests were CHARACTERIZATION tests pinning known core defects
+ * (/desk ignored price.published; the heading double-pluralized).
+ * v0.2.1 (2026-11-21) fixed core — the flips happened exactly as this
+ * header predicted, and the tests now assert the CORRECT behavior:
+ * desk guards unpublished amounts, pluralization is single, and the
+ * page map is keyed by the manifest's door field (a required contract
+ * field the engine used to ignore — a Thom tear, now closed).
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -68,8 +70,8 @@ test("(a+) aurora bends every knob the contract says can bend", () => {
 
 /* ------------------------------ (b) page map ------------------------------ */
 
-test("(b) renderSite(aurora) returns exactly /, one /enrol/<code> per program, and /desk", () => {
-  const expected = ["/", "/desk", ...aurora.programs.map((p) => `/enrol/${p.code}`)].sort();
+test("(b) renderSite(aurora) returns exactly /, one page per program door, and /desk", () => {
+  const expected = ["/", "/desk", ...aurora.programs.map((p) => p.door)].sort();
   assert.deepEqual(Object.keys(auroraPages).sort(), expected);
   for (const [path, html] of Object.entries(auroraPages)) {
     assert.equal(typeof html, "string");
@@ -80,11 +82,10 @@ test("(b) renderSite(aurora) returns exactly /, one /enrol/<code> per program, a
 
 /* ----------------------- (c) unpublished price discipline ----------------- */
 
-test("(c) the unpublished amount appears on no family-facing page (/, /enrol/*)", () => {
+test("(c) the unpublished amount appears on NO page at all — family or desk", () => {
   // Both spellings: the raw amount string and the locale-grouped one money() emits.
   const needles = [String(hidden.price.amount), hidden.price.amount.toLocaleString()];
   for (const [path, html] of Object.entries(auroraPages)) {
-    if (path === "/desk") continue; // staff view — covered by the characterization test below
     for (const needle of needles)
       assert.ok(!html.includes(needle), `${path} leaks unpublished amount "${needle}"`);
   }
@@ -92,19 +93,14 @@ test("(c) the unpublished amount appears on no family-facing page (/, /enrol/*)"
 
 test("(c-) the guard is not vacuous: a published amount DOES render", () => {
   assert.ok(auroraPages["/"].includes(shown.price.amount.toLocaleString()));
-  const own = auroraPages[`/enrol/${shown.code}`];
+  const own = auroraPages[shown.door];
   assert.ok(own.includes(shown.price.amount.toLocaleString()));
 });
 
-test("(c✗) CHARACTERIZATION — core.mjs defect, reported not fixed: /desk ignores price.published", () => {
-  // core.mjs:144 calls money(p.price) unguarded, while the home and enrol pages
-  // guard with `p.price.published ? … : ""`. The unpublished amount therefore
-  // DOES appear on /desk. If core is ever fixed, this test flips — deliberately.
+test("(c✓) v0.2.1: /desk guards price.published too (was a characterization defect)", () => {
   const desk = auroraPages["/desk"];
-  assert.ok(
-    desk.includes(hidden.price.amount.toLocaleString()),
-    "desk unexpectedly hides the unpublished amount — fix core, then delete this characterization",
-  );
+  assert.ok(!desk.includes(hidden.price.amount.toLocaleString()), "desk must not leak the unpublished amount");
+  assert.ok(desk.includes("price not published"), "desk must say so honestly instead");
 });
 
 /* --------------------- (d) fixtures that MUST fail validation ------------- */
@@ -165,10 +161,8 @@ test("(e+) the plural helper bends other entities too (mutation fixtures)", () =
   }
 });
 
-test("(e✗) CHARACTERIZATION — core.mjs defect, reported not fixed: the heading double-pluralizes", () => {
-  // core.mjs:121 writes `Our ${plural(entity)}s` — an extra literal "s" after a
-  // word the helper already pluralized: "coursess", "activitiess". The (e) tests
-  // above pass on substring; this test records the exact defect.
-  assert.match(auroraPages["/"], /<h2>Our coursess<\/h2>/);
-  assert.match(renderSite(lotus)["/"], /<h2>Our activitiess<\/h2>/);
+test("(e✓) v0.2.1: the heading pluralizes once (was a characterization defect)", () => {
+  assert.match(auroraPages["/"], /<h2>Our courses<\/h2>/);
+  assert.match(renderSite(lotus)["/"], /<h2>Our activities<\/h2>/);
+  assert.ok(!auroraPages["/"].includes("coursess") && !renderSite(lotus)["/"].includes("activitiess"));
 });
