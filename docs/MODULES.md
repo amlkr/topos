@@ -9,12 +9,12 @@
 | Orden | Módulo | Estado | Roles | Qué es real hoy |
 |---|---|---|---|---|
 | 0-9 | Core (Hoy, Pipeline, Money, People, Stories, School) | **vivo** | todos/staff | las cinco primitivas sembradas, manifiesto editable con contrato que muerde |
-| 10 | **crm** | en construcción (agente) | director, admissions | leads con estados y seguimiento, filtro, seed demo ficticio |
-| 20 | **finance** | en construcción (agente) | director, finance | libro de gastos propio + lo cobrado/pendiente LEÍDO del core (nunca duplicado) |
-| 30 | **comms** | en construcción (agente) | todo el staff | anuncios fijados + tareas por rol |
-| 40 | **curriculum** | en construcción (agente) | director, coach | packs como datos + `spec/pack.schema.json` estricto + pack sembrado |
+| 10 | **crm** | VIVO | director, admissions | leads con estados y seguimiento, filtro, seed demo ficticio |
+| 20 | **finance** | VIVO | director, finance | libro de gastos propio + lo cobrado/pendiente LEÍDO del core (nunca duplicado) |
+| 30 | **comms** | VIVO | todo el staff | anuncios fijados + tareas por rol |
+| 40 | **curriculum** | VIVO | director, coach | packs como datos + `spec/pack.schema.json` estricto + pack sembrado |
 | 50 | **marketing** | **stub honesto** (integrador) | director | la cola del core en vivo + la lista de lo que falta; sin botón "publicar" porque no hay conector |
-| 80 | **familias** | en construcción (agente) | público /familias + helper staff | portal por token de capacidad, solo SU familia, rechazo genérico |
+| 80 | **familias** | VIVO (público /familias) | público /familias + helper staff | portal por token de capacidad, solo SU familia, rechazo genérico |
 | 90 | example | vivo (test del contrato) | todos | la prueba de que el registry funciona |
 
 ## El orden no es cosmético
