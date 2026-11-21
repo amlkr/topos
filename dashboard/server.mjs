@@ -27,6 +27,7 @@ import { loadManifest, validateManifest, contractProblems } from "../manifold/co
 import { createAuth } from "./auth.mjs";
 import { open, seedDemo } from "./data.mjs";
 import { renderDashboard } from "./views.mjs";
+import { record as journalRecord } from "./journal.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
@@ -117,6 +118,36 @@ const problemsPage = (problems) => `${CHROME}
 const readBody = (req) => new Promise((res) => { let d = ""; req.on("data", (c) => (d += c)); req.on("end", () => res(new URLSearchParams(d))); });
 const send = (r, code, html, headers = {}) => { r.writeHead(code, { "content-type": "text/html; charset=utf-8", "x-content-type-options": "nosniff", ...headers }); r.end(html); };
 
+/* ---- audit journal (dashboard/journal.mjs) --------------------------------
+ * ONE helper for every hook; the routes below only call journalWrite() at
+ * their write points and stay otherwise intact. Entries: auth (login-ok,
+ * login-fail, logout), school (fold, fold-refused), and one per module key
+ * (the form's `action`, ref = id of the record acted on when the form
+ * carries one). journal.record never throws, so a dead disk changes no
+ * response — the audit degrades to a console.error line, the panel lives. */
+const JOURNAL_REF_FIELDS = ["ref", "lead", "lead_id", "leadId", "expense", "expense_id", "expenseId", "person", "thread", "post", "task", "id", "done", "pin"];
+function journalWrite(req, { form = null, actor = "", role = "", module = "", action = "", ref = "" }) {
+  let r = String(ref ?? "");
+  if (!r && form) {
+    for (const f of JOURNAL_REF_FIELDS) {
+      const v = String(form.get(f) ?? "").trim();
+      if (v) { r = v; break; }
+    }
+  }
+  journalRecord({
+    slug: store.slug,
+    entry: {
+      ts: new Date().toISOString(),
+      actor: String(actor || "anonymous"),
+      role: String(role || "unknown"),
+      module: String(module),
+      action: String(action),
+      ref: r.slice(0, 120),
+      ip: String(req.socket.remoteAddress ?? ""),
+    },
+  });
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const path = url.pathname;
@@ -146,11 +177,21 @@ const server = createServer(async (req, res) => {
 
   if (path === "/login") {
     if (req.method === "POST") {
-      if (!auth.rateLimiter("ip:" + (req.socket.remoteAddress ?? "unknown")).ok)
+      if (!auth.rateLimiter("ip:" + (req.socket.remoteAddress ?? "unknown")).ok) {
+        journalWrite(req, { module: "auth", action: "login-fail", ref: "rate-limited" }); // sin cuerpo leído: actor 'anonymous'
         return send(res, 429, loginPage("Demasiados intentos desde tu red — espera un minuto."));
+      }
       const b = await readBody(req);
-      const out = auth.login(String(b.get("email") ?? ""), String(b.get("password") ?? ""));
-      if (out.ok) return send(res, 303, "", { location: "/", "set-cookie": out.cookie });
+      const attempt = String(b.get("email") ?? "");
+      const out = auth.login(attempt, String(b.get("password") ?? ""));
+      if (out.ok) {
+        const sess = auth.verify(out.cookie) ?? {}; // email/role canónicos de la sesión recién creada
+        journalWrite(req, { actor: sess.email || attempt, role: sess.role || "", module: "auth", action: "login-ok" });
+        return send(res, 303, "", { location: "/", "set-cookie": out.cookie });
+      }
+      // motivo genérico: auth ya colapsa email-desconocido y contraseña-incorrecta en
+      // «invalid-credentials» a propósito; el diario repite ese mismo, nada más.
+      journalWrite(req, { actor: attempt, role: "unknown", module: "auth", action: "login-fail", ref: out.reason === "rate-limited" ? "rate-limited" : "invalid-credentials" });
       const msg = out.reason === "rate-limited" ? "Demasiados intentos — espera un minuto." : "Credenciales incorrectas.";
       return send(res, 401, loginPage(msg));
     }
@@ -160,20 +201,28 @@ const server = createServer(async (req, res) => {
   if (!who) { res.writeHead(303, { location: "/login" }); return res.end(); }
 
   if (path === "/logout" && req.method === "POST") {
+    journalWrite(req, { actor: who.email, role: who.role, module: "auth", action: "logout" });
     return send(res, 303, "", { location: "/login", "set-cookie": auth.logout(req.headers.cookie ?? "") });
   }
 
   // School tab save: validate BEFORE touching disk; only the director folds.
   if (path === "/school/save" && req.method === "POST") {
-    if (who.role !== "director") return send(res, 403, problemsPage(["Solo el director puede plegar el manifiesto de la escuela."]));
+    if (who.role !== "director") return send(res, 403, problemsPage(["Solo el director puede plegar el manifiesto de la escuela."])); // no es escritura: no se registra
     const draft = (await readBody(req)).get("manifest") ?? "";
     let parsed;
     try { parsed = YAML.parse(draft); }
-    catch (e) { return send(res, 422, problemsPage(["YAML inválido: " + e.message])); }
+    catch (e) {
+      journalWrite(req, { actor: who.email, role: who.role, module: "school", action: "fold-refused", ref: "1" }); // un problema: el YAML
+      return send(res, 422, problemsPage(["YAML inválido: " + e.message]));
+    }
     const problems = [...validateManifest(parsed, SCHEMA), ...contractProblems(parsed)];
-    if (problems.length) return send(res, 422, problemsPage(problems));
+    if (problems.length) {
+      journalWrite(req, { actor: who.email, role: who.role, module: "school", action: "fold-refused", ref: String(problems.length) }); // ref = nº de problemas
+      return send(res, 422, problemsPage(problems));
+    }
     copyFileSync(SCHOOL, SCHOOL + ".bak"); // the previous fold survives
     writeFileSync(SCHOOL, draft);
+    journalWrite(req, { actor: who.email, role: who.role, module: "school", action: "fold", ref: `${draft.length}B` });
     res.writeHead(303, { location: "/?view=school&folded=1" }); return res.end();
   }
 
@@ -187,8 +236,13 @@ const server = createServer(async (req, res) => {
     const ctx = { manifest, store, session: who, slug: store.slug, query: url.searchParams };
     if (req.method === "POST") {
       if (typeof mod.handle !== "function") return send(res, 405, problemsPage(["este módulo no acepta escrituras"]));
-      let out = await mod.handle(ctx, await readBody(req));
+      const form = await readBody(req);
+      let out = await mod.handle(ctx, form);
       if (typeof out === "string") out = { html: out };
+      // el diario registra el POST saliente SIN estado de error (4xx/5xx = no cuentan;
+      // un redirect de módulo es su éxito); el 403 de roles ni llega aquí.
+      if (Number(out?.status ?? 200) < 400)
+        journalWrite(req, { form, actor: who.email, role: who.role, module: key, action: String(form.get("action") ?? "post") });
       if (out?.redirect) { res.writeHead(303, { location: out.redirect }); return res.end(); }
       return send(res, out?.status ?? 200, page(mod, ctx, out?.html ?? ""));
     }

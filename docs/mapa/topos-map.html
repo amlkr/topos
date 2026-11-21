@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+@page { size: 420mm 297mm; margin: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--paper:#fff;--ink:#0b0b0b;--tang:#fe7141;--lav:#cdabfe;--sage:#d1ddd3;--graph:#595959;--tint:#f2f1ef}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--paper);width:420mm;height:297mm;overflow:hidden;font-size:11px;line-height:1.35;display:flex;flex-direction:column}
+.mono{font-family:"JetBrains Mono",monospace}
+b, strong{font-weight:700}
+h1,h2,h3,.disp{font-family:Archivo,sans-serif;font-weight:500;letter-spacing:-.04em;line-height:.95}
+header{background:var(--ink);color:var(--paper);padding:10mm 14mm 8mm;display:flex;align-items:flex-end;gap:12mm}
+header h1{font-size:46px}
+header .kicker{color:var(--sage);font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:10px;margin-bottom:2mm}
+header .lede{color:var(--lav);font-size:14px;max-width:150mm;line-height:1.35}
+header .date{margin-left:auto;text-align:right;color:var(--graph);font-size:10px}
+header .date b{color:var(--tang)}
+main{padding:8mm 14mm 0;display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:7mm}
+.panel{border:2px solid var(--ink);padding:5mm}
+.panel>h2{font-size:19px;margin-bottom:1mm}
+.panel>.sub{color:var(--graph);font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:3mm}
+.item{border:2px solid var(--ink);padding:2.6mm 3mm;margin-bottom:2.4mm;background:var(--paper)}
+.item h3{font-size:12.5px;font-weight:600;margin-bottom:.6mm}
+.item p{font-size:10.5px;color:var(--graph)}
+.item.live{border-left:5px solid var(--sage)}
+.item.build{border-left:5px solid var(--tang)}
+.item.plan{border-left:5px solid var(--lav);border-style:dashed}
+.center .rule{background:var(--tang);color:var(--ink);border:2px solid var(--ink);padding:2.6mm 3mm;margin-bottom:3mm;font-weight:700;font-size:11.5px}
+.consts{display:flex;flex-wrap:wrap;gap:1.6mm;margin-bottom:3mm}
+.consts span{border:2px solid var(--ink);background:var(--ink);color:var(--sage);padding:1.1mm 2.4mm;font-weight:700;font-size:10.5px}
+.flow{margin:6mm 14mm 0;border:2px solid var(--ink);background:var(--sage);padding:3mm 4mm;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:4mm;flex-wrap:wrap}
+.flow .arrow{font-weight:400;color:var(--graph)}
+.services{margin:5mm 14mm 0;display:grid;grid-template-columns:1fr 1fr 1.15fr 1.5fr;gap:6mm}
+.svc{border:2px solid var(--ink);padding:4mm}
+.svc h2{font-size:17px}
+.svc .price{font-family:Archivo;font-size:22px;font-weight:600;letter-spacing:-.03em}
+.svc p{font-size:10.5px;color:var(--graph)}
+.svc ul{margin:2mm 0 0 4mm;font-size:10.5px}
+.svc.puerta{background:var(--paper)}
+.svc.oficina{background:var(--lav)}
+.svc.campus{background:var(--tang)}
+.svc.oficina p,.svc.oficina ul{color:var(--ink)}
+.svc.campus p,.svc.campus ul{color:var(--ink)}
+.cat{border:2px solid var(--ink);background:var(--paper);padding:0}
+.cat .row{display:grid;grid-template-columns:1.1fr 2.1fr 1.6fr .9fr;border-bottom:2px solid var(--ink);padding:2.2mm 3mm;gap:3mm;align-items:center}
+.cat .row:last-child{border-bottom:0}
+.cat .hd{background:var(--ink);color:var(--paper);font-weight:700;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+.cat .row h3{font-size:12px;font-weight:600}
+.cat .row p{font-size:10px;color:var(--graph)}
+.cat .never{font-size:10px;border-left:3px solid var(--tang);padding-left:2.4mm}
+.badge{font-weight:700;font-size:9.5px;padding:1mm 2.4mm;border:2px solid var(--ink);white-space:nowrap;text-align:center}
+.badge.vivo{background:var(--sage)}
+.badge.hoy{background:var(--tang)}
+.badge.plan{border-style:dashed;color:var(--graph)}
+footer{margin-top:auto;background:var(--ink);color:var(--sage);padding:5mm 14mm;display:flex;gap:10mm;align-items:center;font-size:10px}
+footer b{color:var(--paper)}
+footer .lgd{margin-left:auto;display:flex;gap:6mm}
+footer .lgd i{display:inline-block;width:12px;height:12px;border:2px solid var(--paper);vertical-align:-2px;margin-right:2mm}
+footer .lgd .l1 i{background:var(--sage);border-color:var(--sage)}
+footer .lgd .l2 i{background:var(--tang);border-color:var(--tang)}
+footer .lgd .l3 i{border-color:var(--lav)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="kicker">el mapa · una persona, muchas escuelas</div>
+    <h1>Topos — sistema, servicios y agentes</h1>
+  </div>
+  <p class="lede">Un contrato (el manifiesto) fabrica dos caras —la web pública y el panel del staff— sobre cinco primitivas invariantes. Los agentes proponen; <b style="color:var(--tang)">el contrato muerde; el humano aprueba; el diario lo firma.</b></p>
+  <div class="date"><b>21·nov·2026</b><br>Chiang Mai · localhost<br>licencia AGPL-3.0<br>diseño: template MIT (8b)</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>La cara pública</h2><p class="sub">lo que ve una familia</p>
+    <div class="item live"><h3>Sitio de la escuela</h3><p>Home + una puerta de matrícula por programa, renderizada del manifiesto. Colores, voces e idiomas incluidos.</p></div>
+    <div class="item live"><h3>Admisiones / formularios</h3><p>Cada escuela define su funnel como dato: los estados del flujo viven en el YAML, no en el código.</p></div>
+    <div class="item live"><h3>Portal de familias <span class="mono">/familias?t=…</span></h3><p>Enlace de capacidad por familia, sin app ni contraseña. Solo ve lo suyo: hijos, semanas, pagos, consentimiento.</p></div>
+    <div class="item live"><h3>Blog con consentimiento</h3><p>La foto no sale si la familia no dijo sí. PDPA/GDPR como conmutador del manifiesto.</p></div>
+    <div class="item plan"><h3>Marketing conectado</h3><p>Publicación a redes con aprobación humana. Hoy: cola + plan honesto, sin conector.</p></div>
+  </section>
+
+  <section class="panel center" style="background:var(--tint)">
+    <h2>El manifiesto</h2><p class="sub">una página = una escuela · el invariante</p>
+    <div class="rule">regla de Thom: lo que no cabe en el manifiesto no es una función, es una grieta</div>
+    <div class="consts">
+      <span>persons</span><span>enrolments</span><span>payments</span><span>communication</span><span>content</span>
+    </div>
+    <div class="item live"><h3>admissions.funnel</h3><p>los estados de cada escuela, declarados; el último siempre es una verdad de pago.</p></div>
+    <div class="item live"><h3>operations.features</h3><p>crm · comms · finance · learning · marketing — el menú que se paga enciende pestañas.</p></div>
+    <div class="item live"><h3>identity + brand + locales</h3><p>nombre, voz, colores, idiomas. El agente de admisiones escribe con esta voz.</p></div>
+    <div class="item live"><h3>El contrato que muerde</h3><p>schema + 26 tests: precio inventado, código duplicado o buzón falso no se guardan. 422 con el store intacto.</p></div>
+  </section>
+
+  <section class="panel">
+    <h2>La cara del staff</h2><p class="sub">el panel — pestañas = features × roles</p>
+    <div class="item live"><h3>Hoy · Matrículas · Dinero · Personas · Historias</h3><p>las cinco primitivas vistas por el lado operativo, leídas del mismo almacén que la web.</p></div>
+    <div class="item live"><h3>Escuela (el manifiesto editable)</h3><p>la directora cambia su escuela aquí; valida el contrato; se pliega o se explica el porqué.</p></div>
+    <div class="item live"><h3>CRM · Finanzas · Equipo · Currículo</h3><p>leads con seguimiento, libro de gastos + morosos, tablero de staff, packs de clases como datos.</p></div>
+    <div class="item hoy"><h3>Diario (journal)</h3><p>cada POST deja quién/cuándo/qué — el rastro que hace explicable a un agente.</p></div>
+    <div class="item live"><h3>Accesos: auth + invites</h3><p>sesiones HMAC, roles del manifiesto, invitaciones de un solo uso por token de capacidad.</p></div>
+  </section>
+</main>
+
+<div class="flow">
+  familia escanea QR / enlace <span class="arrow">→</span> web de la escuela (matrícula) <span class="arrow">→</span> primitivas de ESA escuela <span class="arrow">→</span> panel se llena solo <span class="arrow">→</span> agente propone borrador <span class="arrow">→</span> contrato valida <span class="arrow">→</span> <b>humano aprueba y envía</b> <span class="arrow">→</span> diario firma
+</div>
+
+<div class="services">
+  <section class="svc puerta">
+    <h2>Puerta</h2><p class="price">$0 · AGPL</p>
+    <p>web + admisiones + receipts.</p>
+    <ul><li>self-host, tu servidor</li><li>fuente completa abierta</li><li>la escuela que puede, lo corre sola</li></ul>
+  </section>
+  <section class="svc oficina">
+    <h2>Oficina</h2><p class="price">desde $300/mes</p>
+    <p>por escuela, plano — nunca por alumno.</p>
+    <ul><li>+ CRM · Finanzas · Equipo · Diario</li><li>dominio, correo, respaldos operados</li><li>upgrade = una línea en el YAML</li></ul>
+  </section>
+  <section class="svc campus">
+    <h2>Campus</h2><p class="price">+ packs</p>
+    <p>colegios completos.</p>
+    <ul><li>+ Currículo y packs de learning</li><li>portal de familias con consentimientos</li><li>locales y topologías a medida</li></ul>
+  </section>
+  <section class="cat">
+    <div class="row hd"><span>Agente</span><span>Qué hace</span><span>Qué NUNCA hace</span><span>Estado</span></div>
+    <div class="row"><h3>Admisiones</h3><p>lee leads trabados, detecta tiempos muertos, redacta el seguimiento con la voz del manifiesto.</p><p class="never">enviar nada — la bandeja dice «esperando a una persona».</p><span class="badge hoy">v0 hoy</span></div>
+    <div class="row"><h3>Finanzas</h3><p>coteja comprobantes, avisa morosos con fecha, propone categorías.</p><p class="never">marcar «pagado» — eso lo firma un humano.</p><span class="badge plan">plan</span></div>
+    <div class="row"><h3>Equipo</h3><p>resume tareas, redacta comunicados, persigue vencidas.</p><p class="never">publicar a familias.</p><span class="badge plan">plan</span></div>
+    <div class="row"><h3>Currículo</h3><p>borradores de packs (semanas, materiales), chequea edades.</p><p class="never">guardar sin que el schema muerda.</p><span class="badge plan">plan</span></div>
+    <div class="row"><h3>Plegador (escáner)</h3><p>escanea la web vieja de la escuela y propone su manifiesto + funnel.</p><p class="never">tocar disco sin aprobación.</p><span class="badge plan">plan</span></div>
+  </section>
+</div>
+
+<footer>
+  <span><b>Frontera dura:</b> localhost · JSON local · cero Esara (es cliente) · cero Supabase · cero Vercel · datos de demo ficticios · atribución MIT del template en el repo.</span>
+  <div class="lgd"><span class="l1"><i></i>vivo</span><span class="l2"><i></i>hoy / esta noche</span><span class="l3"><i></i>planificado</span></div>
+</footer>
+</body>
+</html>
