@@ -272,6 +272,11 @@ function buildSeed(manifest, slug, reference) {
   const funnels = manifest.communication?.funnels ?? [];
   const funnelAddress = (key) => (funnels.find((f) => f.key === key) ?? funnels[0])?.address ?? null;
   const rng = mulberry32(hashString(`${slug}:${PRNG_SEED}`));
+  // A school may switch a feature off in its manifest. The demo store obeys:
+  // with `proofs: false` nobody uploads a slip, and the dashboard says so
+  // instead of counting a queue that this school does not have.
+  const features = manifest.operations?.features ?? {};
+  const proofsOn = features.proofs !== false;
 
   const persons = FAMILIES.map((f, i) => ({
     id: `p-${String(i + 1).padStart(4, "0")}`,
@@ -408,7 +413,7 @@ function buildSeed(manifest, slug, reference) {
       category: l.category,
       month,
       date,
-      status: daysBetween(date, reference) >= 0 ? "registrado, pendiente de salida" : "pagado",
+      status: daysBetween(date, reference) >= 0 ? "hecho" : "previsto",
       note: "gasto de la escuela, no de una familia",
     };
   });
@@ -732,7 +737,74 @@ export function open(manifestOrPath, opts = {}) {
         };
       });
 
-      return { order: ENROLMENT_STATUSES, groups, total: rows.length, totals: { paid: rows.filter((x) => x.paid).length, unpaid: rows.filter((x) => !x.paid).length } };
+      // Two more surfaces of the same queue: the inbox (primitive
+      // `communication`) and the slips (feature `proofs`). The HOY lines link
+      // straight into them, so every count on screen has a page behind it.
+      const threads = r.threads
+        .map((x) => {
+          const person = byPerson.get(x.personId) ?? null;
+          const waiting = daysBetween(x.lastAt, date);
+          return {
+            id: x.id,
+            subject: x.subject,
+            status: x.status,
+            parentName: person?.parent?.name ?? "(familia no encontrada)",
+            email: person?.parent?.email ?? null,
+            locale: person?.locale ?? null,
+            children: (person?.children ?? []).map((c) => c.name).join(", "),
+            refs: r.payments.filter((p) => p.personId === x.personId).map((p) => p.ref),
+            funnel: x.funnel,
+            lastAt: x.lastAt,
+            lastFrom: x.lastFrom,
+            preview: x.preview,
+            waitingDays: x.status === "open" ? Math.max(0, waiting ?? 0) : 0,
+          };
+        })
+        .sort((a, b) => (a.status === b.status ? (a.lastAt < b.lastAt ? -1 : 1) : a.status === "open" ? -1 : 1));
+
+      const proofRows = r.proofs
+        .map((x) => {
+          const enrolment = byEnrolment.get(x.enrolmentId) ?? null;
+          const payment = payByEnrolment.get(x.enrolmentId) ?? null;
+          const person = enrolment ? byPerson.get(enrolment.personId) ?? null : null;
+          return {
+            id: x.id,
+            ref: x.ref,
+            child: enrolment?.child ?? null,
+            parentName: person?.parent?.name ?? null,
+            programCode: enrolment?.programCode ?? null,
+            amount: payment ? Number(payment.amount || 0) : Number(enrolment?.amount || 0),
+            currency: payment?.currency ?? "THB",
+            paid: Boolean(payment?.paid),
+            state: x.verified === true ? "verified" : x.verified === false ? "rejected" : "pending",
+            filename: x.filename,
+            size: x.size,
+            uploaded: x.uploaded,
+            verifiedAt: x.verifiedAt ?? null,
+            note: x.note ?? null,
+          };
+        })
+        .sort((a, b) => (a.state === b.state ? (a.uploaded < b.uploaded ? 1 : -1) : a.state === "pending" ? -1 : b.state === "pending" ? 1 : a.state === "rejected" ? -1 : 1));
+
+      return {
+        order: ENROLMENT_STATUSES,
+        groups,
+        total: rows.length,
+        totals: { paid: rows.filter((x) => x.paid).length, unpaid: rows.filter((x) => !x.paid).length },
+        threads: {
+          count: threads.length,
+          open: threads.filter((x) => x.status === "open").length,
+          answered: threads.filter((x) => x.status === "answered").length,
+          items: threads,
+        },
+        proofs: {
+          count: proofRows.length,
+          pending: proofRows.filter((x) => x.state === "pending").length,
+          rejected: proofRows.filter((x) => x.state === "rejected").length,
+          verified: proofRows.filter((x) => x.state === "verified").length,
+          items: proofRows,
+        },
+      };
     },
 
     /**

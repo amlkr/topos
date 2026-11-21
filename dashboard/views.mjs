@@ -272,6 +272,56 @@ function viewHoy(manifest, store, t) {
 
 /* ------------------------------- PIPELINE -------------------------------- */
 function viewPipeline(manifest, store, p) {
+  const threads = `<section class="clay group" id="conversaciones">
+  <div class="group-head">
+    <h2>Conversaciones</h2>
+    <span class="count">${p.threads.open}</span>
+    <p class="note">${p.threads.open ? `${pluralCount(p.threads.open, "abierta y sin respuesta", "abiertas y sin respuesta")} · ${p.threads.answered} ya contestadas` : "todo contestado"}</p>
+  </div>
+  <div class="tw"><table>
+    <caption>Primitiva <code>communication</code>: el hilo existe porque un fun del manifiesto recibió un mensaje. Aquí se lee; contestar se hace en el buzón de verdad.</caption>
+    <thead><tr><th scope="col">Asunto</th><th scope="col">Familia</th><th scope="col">Referencias</th><th scope="col">Último mensaje</th><th scope="col">Espera</th></tr></thead>
+    <tbody>${p.threads.items
+      .map(
+        (x) => `<tr>
+  <th scope="row">${esc(x.subject)}<br><span class="note ref">${esc(x.funnel)}</span></th>
+  <td><span class="strong">${esc(x.parentName)}</span>${x.email ? `<br><a href="mailto:${esc(x.email)}">${esc(x.email)}</a>` : ""}<br><span class="note">${esc(x.children)}</span></td>
+  <td class="ref">${x.refs.length ? x.refs.map((r) => esc(r)).join("<br>") : `<span class="note">sin matrícula</span>`}</td>
+  <td>${chip(x.lastFrom === "parent" ? "dice la familia" : "dice la mesa", x.lastFrom === "parent" ? "sky" : "navy")}<span class="note" style="display:block;max-width:38ch">${esc(x.preview)}</span><span class="note">${esc(x.lastAt)}</span></td>
+  <td>${x.status === "open" ? (x.waitingDays > 2 ? chip(`${x.waitingDays} días esperando`, "coral") : chip(`${x.waitingDays} días`, "orange")) : chip("contestado", "green")}</td>
+</tr>`,
+      )
+      .join("")}</tbody>
+  </table></div>
+</section>`;
+
+  const proofs = `<section class="clay group" id="resguardos">
+  <div class="group-head">
+    <h2>Resguardos subidos</h2>
+    <span class="count">${p.proofs.pending}</span>
+    <p class="note">${p.proofs.count} justificantes en el almacén: ${p.proofs.verified} verificados, ${p.proofs.pending} por ver, ${p.proofs.rejected} rechazados. Verificar es marcar a mano tras cotejar el banco; nadie más queda avisado.</p>
+  </div>
+  ${manifest?.operations?.features?.proofs === false ? `<p class="clay callout callout--warn"><strong>El manifiesto dice <code>operations.features.proofs: false</code>.</strong> Esta escuela no recibe justificantes: lo que hay debajo es el almacén de demo, y en producción esa fila estaría vacía.</p>` : ""}
+  <div class="tw"><table>
+    <caption>Función <code>proofs</code>: nombre de fichero, tamaño y fecha de subida salen de <code>proofs.json</code>. Ningún fichero se abre ni se sirve desde este panel.</caption>
+    <thead><tr><th scope="col">Ref.</th><th scope="col">Familia</th><th scope="col">Fichero</th><th scope="col" class="num-col">Importe</th><th scope="col">Pago</th><th scope="col">Verificación</th></tr></thead>
+    <tbody>${p.proofs.items.length
+      ? p.proofs.items
+          .map(
+            (x) => `<tr>
+  <th scope="row" class="ref">${esc(x.ref)}</th>
+  <td><span class="strong">${esc(x.child ?? "—")}</span><br><span class="note">${esc(x.parentName ?? "—")}</span></td>
+  <td class="note ref">${esc(x.filename)}<br>${esc(formatBytes(x.size))} · subido ${esc(x.uploaded)}</td>
+  <td class="num-col">${esc(formatAmount(x.amount, x.currency))}</td>
+  <td>${x.paid ? chip("cobrado", "green") : chip("sin cobrar", "orange")}</td>
+  <td>${x.state === "verified" ? chip("verificado", "green") : x.state === "rejected" ? chip("rechazado", "coral") : chip("por ver", "lime")}${x.verifiedAt ? `<br><span class="note">${esc(x.verifiedAt)}</span>` : ""}${x.note ? `<br><span class="note">${esc(x.note)}</span>` : ""}</td>
+</tr>`,
+          )
+          .join("")
+      : `<tr><td colspan="6" class="note">Nadie ha subido un solo resguardo todavía.</td></tr>`}</tbody>
+  </table></div>
+</section>`;
+
   const groups = p.groups.map((g) => {
     const rows = g.items.length
       ? g.items
@@ -305,9 +355,11 @@ function viewPipeline(manifest, store, p) {
     ${head({
       kicker: "PIPELINE",
       title: "Matrículas por estado",
-      sub: `${p.total} matrículas · ${p.totals.paid} con pago registrado · ${p.totals.unpaid} sin pago.`,
+      sub: `${p.total} matrículas · ${p.totals.paid} con pago registrado · ${p.totals.unpaid} sin pago · ${p.threads.open} conversaciones abiertas · ${p.proofs.pending} resguardos por ver.`,
     })}
+    ${threads}
     ${groups.join("")}
+    ${proofs}
   </section>`;
 }
 
@@ -331,7 +383,7 @@ function viewMoney(manifest, store, m) {
   const exp = m.expenses;
   const expItems = exp.items.length
     ? exp.items
-        .map((l) => `<li><span class="story-title">${esc(l.title)}</span>${chip(l.status, l.status === "pagado" ? "green" : "lime")}<span class="note">${esc(l.category)} · ${esc(l.date)}</span><span class="num-col strong" style="margin-left:auto">${esc(formatAmount(l.amount, l.currency))}</span></li>`)
+        .map((l) => `<li><span class="story-title">${esc(l.title)}</span>${chip(l.status === "hecho" ? "gasto hecho" : "previsto", l.status === "hecho" ? "green" : "sky")}<span class="note">${esc(l.category)} · ${esc(l.date)}</span><span class="num-col strong" style="margin-left:auto">${esc(formatAmount(l.amount, l.currency))}</span></li>`)
         .join("")
     : `<li><span class="note">Sin gastos registrados en ${esc(monthLabel(exp.month))}.</span></li>`;
 
