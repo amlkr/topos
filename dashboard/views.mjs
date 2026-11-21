@@ -99,8 +99,8 @@ const CSS = `
 html{color-scheme:light;scroll-behavior:smooth}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:"Inter",ui-sans-serif,system-ui,sans-serif;font-size:17px;line-height:1.45;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
 h1,h2,h3,.brand,.num,.tab,.chip,.btn,.badge{font-family:"Archivo","Inter",ui-sans-serif,sans-serif}
-h1{font-size:clamp(34px,4.2vw,56px);font-weight:500;line-height:1;letter-spacing:-.045em;margin:.2rem 0 .9rem}
-h2{font-size:clamp(20px,2vw,27px);font-weight:500;line-height:1.14;letter-spacing:-.03em;margin:0}
+h1{font-size:clamp(26px,3vw,36px);font-weight:500;line-height:1;letter-spacing:-.045em;margin:.2rem 0 .9rem}
+h2{font-size:clamp(17px,1.7vw,21px);font-weight:500;line-height:1.14;letter-spacing:-.03em;margin:0}
 h3{font-size:1rem;margin:0;font-weight:600}
 p{margin:.4rem 0}
 a{color:var(--ink);text-underline-offset:3px}
@@ -109,19 +109,25 @@ a{color:var(--ink);text-underline-offset:3px}
 ::selection{background:var(--lavender);color:var(--ink)}
 .skip{position:absolute;left:-9999px}
 .skip:focus{left:14px;top:14px;z-index:30;background:var(--ink);color:var(--sage);padding:10px 16px;text-decoration:none;font-weight:700}
-.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:3px solid var(--ink)}
-.bar-in{max-width:1160px;margin:0 auto;padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
-.brand-block{margin-right:auto}
+.shell{display:flex;min-height:100vh}
+.side{width:248px;flex:none;border-right:2px solid var(--ink);padding:18px 12px;display:flex;flex-direction:column;gap:10px;position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--ink);color:var(--paper)}
+.side-brand{padding:2px 8px 12px;border-bottom:2px solid var(--graphite)}
+.main-col{flex:1;min-width:0}
+.nav-group{font-size:.66rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:14px 0 4px;padding:0 8px}
+.side-who{margin-top:auto;border-top:2px solid var(--graphite);padding-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:8px}
 .brand{font-size:1.15rem;font-weight:600;margin:0;line-height:1.15;max-width:34ch;letter-spacing:-.03em}
+.side .kicker{color:var(--tangerine)}
+.side .brand{color:var(--paper)}
+.side .note{color:var(--sage)}
 .kicker{font-size:.7rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);margin:0}
-.tabs{display:flex;flex-wrap:wrap;gap:6px}
-.tab{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.35rem .95rem;text-decoration:none;font-weight:600;font-size:.92rem;border:2px solid transparent;color:var(--ink)}
-.tab:hover{border-color:var(--ink)}
-.tab[aria-current="page"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.side-nav{display:flex;flex-direction:column;gap:3px}
+.tab{display:flex;align-items:center;justify-content:flex-start;min-height:44px;padding:0 12px;text-decoration:none;font-weight:600;font-size:.95rem;border:2px solid transparent;color:var(--paper)}
+.side .tab:hover{border-color:var(--tangerine);color:var(--tangerine)}
+.side .tab[aria-current="page"]{background:var(--tangerine);color:var(--ink);border-color:var(--tangerine)}
 .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .badge{display:inline-block;background:var(--ink);color:var(--sage);padding:.3rem .7rem;font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .email{font-size:.82rem;color:var(--graphite);max-width:24ch;overflow-wrap:anywhere}
-.wrap{max-width:1160px;margin:0 auto;padding:26px 18px 60px}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 26px 56px}
 .section{margin:0 0 34px}
 .head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;margin-bottom:14px}
 .head p.sub{color:var(--graphite);margin:0;font-size:.95rem}
@@ -129,14 +135,14 @@ a{color:var(--ink);text-underline-offset:3px}
 .clay:hover{background:var(--card)}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .grid--wide{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.stat{background:var(--card);padding:18px 20px;display:flex;flex-direction:column;gap:2px;border:2px solid var(--ink);border-top-width:6px;border-top-color:var(--tangerine)}
+.stat{background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:2px;border:2px solid var(--ink);border-top-width:6px;border-top-color:var(--tangerine)}
 .stat--sky{border-top-color:var(--lavender)}
 .stat--lime{border-top-color:var(--sage)}
 .stat--coral{border-top-color:var(--tangerine)}
 .stat--plum{border-top-color:var(--lavender)}
 .stat--grey{border-top-color:var(--graphite)}
 .stat-label{font-size:.82rem;font-weight:700;color:var(--graphite);letter-spacing:.02em;margin:0}
-.num{font-size:clamp(40px,5vw,64px);font-weight:500;line-height:.94;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:.2rem 0 0;font-family:"Archivo","Inter",sans-serif}
+.num{font-size:clamp(26px,3vw,36px);font-weight:500;line-height:.94;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:.2rem 0 0;font-family:"Archivo","Inter",sans-serif}
 .unit{font-size:.85rem;font-weight:700;color:var(--graphite);margin:0}
 .detail{font-size:.9rem;margin:.5rem 0 0;color:var(--ink)}
 .empty-note{font-size:.95rem;font-weight:700;margin:.4rem 0 0}
@@ -147,9 +153,9 @@ a{color:var(--ink);text-underline-offset:3px}
 .count{display:inline-flex;align-items:center;justify-content:center;min-width:2rem;padding:.1rem .55rem;background:var(--ink);color:var(--paper);font-weight:700;font-size:.85rem}
 .note{font-size:.85rem;color:var(--graphite)}
 .tw{overflow-x:auto;border:2px solid var(--ink);background:var(--card)}
-table{border-collapse:collapse;width:100%;font-size:.92rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
 caption{caption-side:bottom;text-align:left;padding:10px 12px;font-size:.82rem;color:var(--graphite)}
-th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:2px solid var(--tint)}
+th,td{padding:8px 10px;text-align:left;vertical-align:top;border-bottom:2px solid var(--tint)}
 tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
 thead th{font-family:"Archivo","Inter",sans-serif;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);border-bottom:3px solid var(--ink);white-space:nowrap;background:var(--paper)}
 tbody tr:nth-child(even){background:#fafaf9}
@@ -193,7 +199,16 @@ pre.yaml{margin:0;background:var(--ink);color:var(--paper);border:2px solid var(
 .stamp{border-top:3px solid var(--ink);background:var(--ink);padding:18px;font-size:.82rem;color:var(--sage)}
 .stamp-in{max-width:1160px;margin:0 auto}
 .stamp strong{color:var(--paper)}
-@media (max-width:640px){.bar-in{padding:10px 14px}.tabs{width:100%}.tab{flex:1 1 auto;font-size:.85rem}.wrap{padding:18px 12px 44px}}
+@media (max-width:900px){
+  .shell{display:block}
+  .side{position:static;height:auto;width:auto;border-right:0;border-bottom:2px solid var(--ink);padding:12px}
+  .side-brand{border-bottom:0;padding-bottom:4px}
+  .side-nav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:6px}
+  .side-nav .nav-group{display:none}
+  .tab{flex:none;white-space:nowrap;width:auto}
+  .side-who{margin-top:6px;flex-direction:row;align-items:center;border-top:0;padding:0;gap:10px;flex-wrap:wrap}
+  .wrap{padding:18px 14px 44px}
+}
 @supports (animation-timeline: view()){
   @media (prefers-reduced-motion: no-preference){
     .section{animation:rise-in linear both;animation-timeline:view();animation-range:entry 10% cover 30%}
@@ -271,7 +286,7 @@ function viewHoy(manifest, store, t) {
     chip(`${c.families} familias`, "navy"),
     chip(`${c.children} niños y niñas`, "sky"),
     chip(`${c.enrolments} matrículas`, "plum"),
-    chip(`${ENROLMENT_STATUSES.map((s) => `${c.byStatus[s] ?? 0} ${s}`).join(" · ")}`, "none"),
+    chip(`${ENROLMENT_STATUSES.map((st) => `${c.byStatus[st] ?? 0} ${{ new: "nuevas", confirmed: "confirmadas", paid: "pagadas", completed: "terminadas" }[st] ?? st}`).join(" · ")}`, "none"),
     c.overdue ? chip(`${pluralCount(c.overdue, "pago vencido", "pagos vencidos")}`, "coral") : chip("nada vencido", "green"),
   ].join("");
 
@@ -644,7 +659,19 @@ export function renderDashboard(manifest, store, session, opts = {}) {
   if (typeof opts.bodyOverride === "string") bodyHtml = opts.bodyOverride;
 
   const allTabs = [...VIEWS.map((v) => ({ key: v.key, label: v.label, href: `?view=${v.key}` })), ...(opts.extraTabs ?? [])];
-  const tabs = allTabs.map((v) => `<a class="tab" href="${esc(v.href)}"${v.key === view ? ' aria-current="page"' : ""}>${esc(v.label)}</a>`).join("");
+  const GROUPS = [
+    ["Operación", ["hoy", "pipeline", "money", "people"]],
+    ["Áreas", ["crm", "admisiones-agent", "finance", "comms", "curriculum"]],
+    ["Comunidad", ["stories", "familias", "marketing"]],
+    ["Gobierno", ["school", "journal", "example"]],
+  ];
+  const tabLink = (v) => `<a class="tab" href="${esc(v.href)}"${v.key === view ? ' aria-current="page"' : ""}>${esc(v.label)}</a>`;
+  const grouped = new Set(GROUPS.flatMap((g) => g[1]));
+  const navHtml = GROUPS.map(([name, keys]) => {
+    const items = allTabs.filter((t) => keys.includes(t.key));
+    if (!items.length) return "";
+    return `<p class="nav-group">${esc(name)}</p>` + items.map(tabLink).join("");
+  }).join("") + (allTabs.filter((t) => !grouped.has(t.key)).map(tabLink).join(""));
 
   let meta = null;
   try {
@@ -671,25 +698,26 @@ export function renderDashboard(manifest, store, session, opts = {}) {
 </head>
 <body>
 <a class="skip" href="#main">Saltar al contenido</a>
-<header class="bar">
-  <div class="bar-in">
-    <div class="brand-block">
-      <p class="kicker">topos · mesa de admisiones</p>
-      <p class="brand">${esc(schoolName)}${manifest?.identity?.domain ? ` <span class="note">${esc(manifest.identity.domain)}</span>` : ""}</p>
-    </div>
-    <nav class="tabs" aria-label="Vistas del panel">${tabs}</nav>
-    <div class="who">
-      <span class="badge">${esc(role ?? "sin sesión")}</span>
-      <span class="email">${esc(email ?? "demo local, nadie autenticado")}</span>
-      <form class="logout" method="post" action="/logout">
-        <button class="btn btn--ghost min-h-11" type="submit">Salir</button>
-      </form>
-    </div>
+<div class="shell">
+<aside class="side">
+  <div class="side-brand">
+    <p class="kicker">topos · panel</p>
+    <p class="brand">${esc(schoolName)}</p>
+    ${manifest?.identity?.domain ? `<p class="note">${esc(manifest.identity.domain)}</p>` : ""}
   </div>
-</header>
-<main id="main"><div class="wrap">
+  <nav class="side-nav" aria-label="Navegación del panel">${navHtml}</nav>
+  <div class="side-who">
+    <span class="badge">${esc(role ?? "sin sesión")}</span>
+    <span class="email">${esc(email ?? "demo local, nadie autenticado")}</span>
+    <form class="logout" method="post" action="/logout">
+      <button class="btn btn--ghost min-h-11" type="submit">Salir</button>
+    </form>
+  </div>
+</aside>
+<div class="main-col"><main id="main"><div class="wrap">
 ${bodyHtml}
-</div></main>
+</div></main></div>
+</div>
 <footer class="stamp"><div class="stamp-in">
   <strong>${esc(schoolName)}</strong> · panel v0 renderizado en el servidor por <code>dashboard/views.mjs</code> desde <code>dashboard/.data/${esc(store?.slug ?? "…")}/</code>.
   ${t ? `${esc(t.counts.families)} familias · ${esc(t.counts.enrolments)} matrículas · ${esc(t.counts.unpaid)} sin pago registrado.` : ""}

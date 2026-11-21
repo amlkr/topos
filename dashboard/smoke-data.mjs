@@ -236,7 +236,7 @@ check("HOY shows the four morning lines with real numbers", () => {
   assert.ok(page.includes(">3<"), "the 3 open threads are not on screen");
   assert.ok(page.includes(">2<"), "the 2 proofs to verify are not on screen");
   assert.ok(page.includes(">5<"), "the 5 unpaid enrolments are not on screen");
-  assert.ok(page.includes("topos · mesa de admisiones"), "no top bar");
+  assert.ok(page.includes("topos · panel"), "no sidebar brand");
   assert.ok(page.includes('class="badge"'), "no role badge");
   assert.ok(page.includes('action="/logout"'), "no logout form");
   assert.ok(page.includes('method="post"'), "logout is not a POST");
