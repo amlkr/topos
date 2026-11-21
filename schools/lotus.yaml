@@ -82,4 +82,4 @@ operations:
     comms: true
     finance: true
     marketing: false
-    learning: false
+    learning: true

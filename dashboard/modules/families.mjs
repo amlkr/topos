@@ -36,7 +36,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { jsonStore, esc, head, endHead, card, money, todayISO } from "../module-kit.mjs";
 
-export const meta = { key: "familias", label: "Familias (vista staff)", order: 80, roles: ["director"], feature: "portal" };
+export const meta = { key: "familias", label: "Portal de familias", order: 80, roles: ["director"], feature: "portal" };
 
 /** Ruta pública: /familias (GET con ?t=…, POST con t en el body). */
 export const publicMeta = { path: "familias" };

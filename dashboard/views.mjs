@@ -224,10 +224,10 @@ pre.yaml{margin:0;background:var(--ink);color:var(--paper);border:2px solid var(
 const VIEWS = [
   { key: "hoy", label: "Hoy" },
   { key: "pipeline", label: "Matrículas" },
-  { key: "money", label: "Dinero" },
+  { key: "money", label: "Cobros" },
   { key: "people", label: "Personas" },
   { key: "stories", label: "Historias" },
-  { key: "school", label: "Escuela" },
+  { key: "school", label: "Manifiesto" },
 ];
 
 const STATUS_LABEL = {
@@ -272,16 +272,28 @@ function viewHoy(manifest, store, t) {
     const body = l.empty
       ? `<p class="num">0</p><p class="unit">${esc(l.unit)}</p><p class="empty-note">Nada pendiente</p><p class="detail">${esc(l.detail)}</p>`
       : `<p class="num">${esc(String(l.value))}</p><p class="unit">${esc(l.unit)}</p><p class="detail">${esc(l.detail)}</p>`;
-    const linkLabel = { threads: "ver conversaciones", proofs: "ver resguardos", unpaid: "ver el dinero", deadline: "ver el manifiesto" }[l.key] ?? "ver";
-    return `<article class="clay stat${tone}">
+    const linkLabel = { threads: "abrir comunicación", proofs: "ver resguardos", unpaid: "ver cobros", deadline: "ver admisiones" }[l.key] ?? "ver";
+    const html = `<article class="clay stat${tone}">
       <p class="stat-label">${esc(l.label)}</p>
       ${body}
       <a class="stat-link" href="${esc(l.href)}">${esc(linkLabel)} →</a>
     </article>`;
+    return { key: l.key, html };
   });
+  const cardByKey = Object.fromEntries(cards.map((cd) => [cd.key, cd.html]));
 
   const allClear = t.lines.every((l) => l.empty);
   const c = t.counts;
+  const AREA_OF = { threads: "Comunicación", proofs: "Finanzas", unpaid: "Finanzas", deadline: "Admisiones" };
+  const byArea = new Map();
+  t.lines.forEach((l) => {
+    const area = AREA_OF[l.key] ?? "Escuela";
+    if (!byArea.has(area)) byArea.set(area, []);
+    byArea.get(area).push(cardByKey[l.key]);
+  });
+  const areaBlocks = [...byArea.entries()].map(([area, cardsIn]) => `
+    <p class="nav-group" style="color:var(--ink);margin:18px 0 8px">${esc(area)}</p>
+    <div class="grid">${cardsIn.join("")}</div>`).join("");
   const strip = [
     chip(`${c.families} familias`, "navy"),
     chip(`${c.children} niños y niñas`, "sky"),
@@ -294,10 +306,10 @@ function viewHoy(manifest, store, t) {
     ${head({
       kicker: `HOY · ${prettyDate(t.date)}`,
       title: `Lo que ${manifest.identity?.altName ?? manifest.identity?.name ?? "la escuela"} tiene sin resolver`,
-      sub: `${esc(manifest.identity?.name ?? "Escuela")} · leído del almacén de demo <code>${esc(store.slug)}</code>: ${c.families} familias, ${c.enrolments} matrículas, ${t.lines.length} líneas de mañana.`,
+      sub: `${esc(manifest.identity?.name ?? "Escuela")} · leído del almacén de demo <code>${esc(store.slug)}</code>: ${c.families} familias, ${c.enrolments} matrículas, todo organizado por departamento.`,
     })}
-    ${allClear ? `<p class="clay allclear">Río tranquilo: las cuatro líneas están a cero esta mañana.</p>` : ""}
-    <div class="grid">${cards.join("")}</div>
+    ${allClear ? `<p class="clay allclear">Río tranquilo: todas las líneas del día están a cero esta mañana.</p>` : ""}
+    ${areaBlocks}
     <div class="strip">${strip}</div>
     <div class="callout"><strong>Cómo se lee «pagada».</strong> No hay pasarela de pago en Topos v0: una persona de la mesa marca el pago al cotejar el transferente. Cada cifra de esta página viene de un fichero JSON del almacén de demo, no de un banco.</div>
   </section>`;
@@ -660,10 +672,11 @@ export function renderDashboard(manifest, store, session, opts = {}) {
 
   const allTabs = [...VIEWS.map((v) => ({ key: v.key, label: v.label, href: `?view=${v.key}` })), ...(opts.extraTabs ?? [])];
   const GROUPS = [
-    ["Operación", ["hoy", "pipeline", "money", "people"]],
-    ["Áreas", ["crm", "admisiones-agent", "finance", "comms", "curriculum"]],
-    ["Comunidad", ["stories", "familias", "marketing"]],
-    ["Gobierno", ["school", "journal", "example"]],
+    ["Admisiones", ["pipeline", "crm", "admisiones-agent", "people"]],
+    ["Finanzas", ["money", "finance"]],
+    ["Académico", ["curriculum"]],
+    ["Comunicación", ["comms", "stories", "marketing", "familias"]],
+    ["Escuela", ["school", "journal", "example"]],
   ];
   const tabLink = (v) => `<a class="tab" href="${esc(v.href)}"${v.key === view ? ' aria-current="page"' : ""}>${esc(v.label)}</a>`;
   const grouped = new Set(GROUPS.flatMap((g) => g[1]));
