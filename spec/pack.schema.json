@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://topos.school/spec/pack.schema.json",
+  "title": "Topos Curriculum Pack v0",
+  "description": "A pack is the school's class as DATA — weeks, activities, ages, materials, objectives. Same philosophy as the manifest: editable, validable, portable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "name", "program", "ages", "term", "weeks", "createdBy", "version"],
+  "properties": {
+    "code": { "type": "string", "pattern": "^[A-Z0-9-]{6,24}$", "description": "school-scoped pack code, e.g. LVIS-ROBOTS-P1" },
+    "name": { "type": "string" },
+    "program": { "type": "string", "description": "the enrolment program code (manifest programs[].code) this pack belongs to" },
+    "ages": { "type": "string", "pattern": "^\\d{1,2}-\\d{1,2}$" },
+    "term": { "type": "string" },
+    "weeks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["week", "title", "objectives", "activities"],
+        "properties": {
+          "week": { "type": "integer", "minimum": 1, "maximum": 60 },
+          "title": { "type": "string" },
+          "objectives": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "activities": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "materials", "space"],
+              "properties": {
+                "name": { "type": "string" },
+                "materials": { "type": "array", "items": { "type": "string" } },
+                "space": { "type": "string", "enum": ["indoor", "outdoor", "either"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "createdBy": { "type": "string", "description": "written by the module from the staff session, never by the draft" },
+    "version": { "type": "integer", "minimum": 1, "description": "the deep editor will bump it; drafts are stored as version 1" }
+  }
+}
