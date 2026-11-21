@@ -79,8 +79,10 @@ const MODULES = [];
 }
 const byKey = new Map(MODULES.map((m) => [m.meta.key, m]));
 const publicRoutes = new Map(MODULES.filter((m) => m.publicMeta?.path).map((m) => ["/" + m.publicMeta.path, m]));
+const featureOn = (m) => !m.meta.feature || (manifest.operations?.features?.[m.meta.feature] !== false);
 const tabsFor = (role) => MODULES
   .filter((m) => !m.meta.roles?.length || m.meta.roles.includes(role))
+  .filter(featureOn)
   .sort((a, b) => (a.meta.order ?? 50) - (b.meta.order ?? 50))
   .map((m) => ({ key: m.meta.key, label: m.meta.label, href: `/m/${m.meta.key}` }));
 
@@ -233,6 +235,8 @@ const server = createServer(async (req, res) => {
     if (!mod) { res.writeHead(303, { location: "/" }); return res.end(); }
     if (mod.meta.roles?.length && !mod.meta.roles.includes(who.role))
       return send(res, 403, problemsPage([`El rol «${who.role}» no gobierna el módulo ${mod.meta.label}.`]));
+    if (!featureOn(mod))
+      return send(res, 403, problemsPage([`El manifiesto apaga la función «${mod.meta.feature}» — no es un error tuyo.`]));
     const ctx = { manifest, store, session: who, slug: store.slug, query: url.searchParams };
     if (req.method === "POST") {
       if (typeof mod.handle !== "function") return send(res, 405, problemsPage(["este módulo no acepta escrituras"]));

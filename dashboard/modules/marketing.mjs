@@ -13,7 +13,7 @@
  */
 import { esc, head, endHead, card } from "../module-kit.mjs";
 
-export const meta = { key: "marketing", label: "Marketing", order: 50, roles: ["director"] };
+export const meta = { key: "marketing", label: "Marketing", order: 50, roles: ["director"], feature: "marketing" };
 
 export function render(ctx) {
   let stories = [];

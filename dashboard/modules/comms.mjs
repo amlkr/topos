@@ -7,7 +7,7 @@
  */
 import { jsonStore, esc, head, endHead, card, empty, field, select, submit, id, todayISO } from "../module-kit.mjs";
 
-export const meta = { key: "comms", label: "Equipo", order: 30, roles: [] }; // [] = todo el staff
+export const meta = { key: "comms", label: "Equipo", order: 30, roles: [], feature: "comms" }; // [] = todo el staff
 
 const KEY = "comms";
 // Los roles que el server monta (dashboard/server.mjs); «todos» es una asignación colectiva.

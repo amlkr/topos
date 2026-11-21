@@ -19,7 +19,7 @@ import {
   field, select, submit, id, todayISO,
 } from "../module-kit.mjs";
 
-export const meta = { key: "finance", label: "Finanzas", order: 20, roles: ["director", "finance"] };
+export const meta = { key: "finance", label: "Finanzas", order: 20, roles: ["director", "finance"], feature: "finance" };
 
 /* ------------------------------------------------------------------ */
 /* vocabulario del libro                                              */

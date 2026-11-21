@@ -25,7 +25,7 @@ import { validateManifest } from "../../manifold/core.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PACK_SCHEMA = JSON.parse(readFileSync(join(HERE, "..", "..", "spec", "pack.schema.json"), "utf8"));
 
-export const meta = { key: "curriculum", label: "Currículo", order: 40, roles: ["director", "coach"] };
+export const meta = { key: "curriculum", label: "Currículo", order: 40, roles: ["director", "coach"], feature: "learning" };
 
 const CODE_RE = /^[A-Z0-9-]{6,24}$/;
 const AGES_RE = /^\d{1,2}-\d{1,2}$/;
