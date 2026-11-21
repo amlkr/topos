@@ -60,6 +60,29 @@ auth.ensureUser("admissions@lotus.example", "topos-demo", "admissions");
 seedDemo(SCHOOL);              // contract order: seed, then open
 const store = open(SCHOOL);
 
+/* ---- module registry (dashboard/MODULE-API.md) ----
+ * Modules are discovered at boot from dashboard/modules/*.mjs. Each is
+ * one file owning one tab; the server never imports their internals
+ * beyond meta/render/handle/publicMeta. */
+import { readdirSync } from "node:fs";
+const MODULES = [];
+{
+  const dir = join(HERE, "modules");
+  if (existsSync(dir)) {
+    for (const f of readdirSync(dir).filter((n) => n.endsWith(".mjs")).sort()) {
+      const m = await import(join(dir, f));
+      if (m.meta?.key && typeof m.render === "function") MODULES.push(m);
+      else console.warn(`módulo ${f} ignorado: le falta meta.key o render() — el contrato manda`);
+    }
+  }
+}
+const byKey = new Map(MODULES.map((m) => [m.meta.key, m]));
+const publicRoutes = new Map(MODULES.filter((m) => m.publicMeta?.path).map((m) => ["/" + m.publicMeta.path, m]));
+const tabsFor = (role) => MODULES
+  .filter((m) => !m.meta.roles?.length || m.meta.roles.includes(role))
+  .sort((a, b) => (a.meta.order ?? 50) - (b.meta.order ?? 50))
+  .map((m) => ({ key: m.meta.key, label: m.meta.label, href: `/m/${m.meta.key}` }));
+
 // ---- integrator pages (same clay clothes as views.mjs, kept small) ----
 const esc = (v) => String(v).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 const CHROME = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#EFEEEC"><title>Topos — acceso</title><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"><style>
@@ -97,6 +120,24 @@ const send = (r, code, html, headers = {}) => { r.writeHead(code, { "content-typ
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const path = url.pathname;
+
+  // ---- public module routes (families portal): no staff session ----
+  const pub = publicRoutes.get(path);
+  if (pub) {
+    const ctx = { manifest, store, slug: store.slug, query: url.searchParams };
+    try {
+      if (req.method === "POST") {
+        const form = await readBody(req);
+        const out = pub.renderPublic ? await pub.renderPublic(ctx, form) : { html: "<p>renderPublic pendiente</p>" };
+        if (out?.redirect) { res.writeHead(303, { location: out.redirect }); return res.end(); }
+        return send(res, out?.status ?? 200, out?.html ?? "");
+      }
+      return send(res, 200, pub.renderPublic ? await pub.renderPublic(ctx) : "<p>renderPublic pendiente</p>");
+    } catch (e) {
+      return send(res, 500, `<p style="font-family:sans-serif;padding:2rem">El portal de familias falló honestamente: ${esc(e.message)}</p>`);
+    }
+  }
+
   const who = auth.verify(req.headers.cookie ?? "");
 
   if (path === "/login") {
@@ -106,7 +147,8 @@ const server = createServer(async (req, res) => {
       const b = await readBody(req);
       const out = auth.login(String(b.get("email") ?? ""), String(b.get("password") ?? ""));
       if (out.ok) return send(res, 303, "", { location: "/", "set-cookie": out.cookie });
-      return send(res, 401, loginPage(out.reason === "rate-limited" ? "Demasiados intentos — espera un minuto." : "Credenciales incorrectas."));
+      const msg = out.reason === "rate-limited" ? "Demasiados intentos — espera un minuto." : "Credenciales incorrectas.";
+      return send(res, 401, loginPage(msg));
     }
     return who ? send(res, 303, "", { location: "/" }) : send(res, 200, loginPage());
   }
@@ -131,15 +173,44 @@ const server = createServer(async (req, res) => {
     res.writeHead(303, { location: "/?view=school&folded=1" }); return res.end();
   }
 
+  // ---- module routes ----
+  if (path.startsWith("/m/")) {
+    const key = path.slice(3);
+    const mod = byKey.get(key);
+    if (!mod) { res.writeHead(303, { location: "/" }); return res.end(); }
+    if (mod.meta.roles?.length && !mod.meta.roles.includes(who.role))
+      return send(res, 403, problemsPage([`El rol «${who.role}» no gobierna el módulo ${mod.meta.label}.`]));
+    const ctx = { manifest, store, session: who, slug: store.slug, query: url.searchParams };
+    if (req.method === "POST") {
+      if (typeof mod.handle !== "function") return send(res, 405, problemsPage(["este módulo no acepta escrituras"]));
+      const out = await mod.handle(ctx, await readBody(req));
+      if (out?.redirect) { res.writeHead(303, { location: out.redirect }); return res.end(); }
+      return send(res, out?.status ?? 200, page(mod, ctx, out?.html ?? ""));
+    }
+    return send(res, 200, page(mod, ctx, mod.render(ctx)));
+  }
+
   if (path === "/" || path === "") {
     return send(res, 200, renderDashboard(manifest, store, who, {
       view: url.searchParams.get("view") ?? "hoy",
       q: url.searchParams.get("q") ?? "",
+      folded: url.searchParams.get("folded") === "1",
+      extraTabs: tabsFor(who.role),
     }));
   }
 
   res.writeHead(303, { location: "/" }); res.end();
 });
+
+// a module body rides the dashboard shell (views.mjs bodyOverride hook)
+function page(mod, ctx, bodyHtml) {
+  return renderDashboard(manifest, store, ctx.session, {
+    view: mod.meta.key,
+    title: mod.meta.label,
+    bodyOverride: bodyHtml,
+    extraTabs: tabsFor(ctx.session.role),
+  });
+}
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`Topos dashboard (${manifest.identity.name}) → http://localhost:${PORT}`);

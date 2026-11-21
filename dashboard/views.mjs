@@ -7,18 +7,22 @@
  * The tokens are *copied* here — this file must not import anything from
  * `site/`, because the dashboard is served by plain node with no build step.
  *
- * Only one exported renderer:
+ * The renderer:
  *
  *   renderDashboard(manifest, store, session, opts) → one HTML page string
  *
  *   manifest : the parsed school manifest (identity + programs are read live)
  *   store    : what data.mjs open() returned (today/pipeline/money/people/stories)
  *   session  : { email, role } from the auth layer, or null
- *   opts     : { view, q, title, dataNote, studioHint }
+ *   opts     : { view, q, folded }
  *
  * opts.view is the tab: hoy | pipeline | money | people | stories | school
  * (default "hoy"; anything else renders an honest "vista no reconocida").
- * opts.q is the People search string, already read from the query by the server.
+ * opts.q is the People search string, already read from the query by the
+ * server. opts.folded is the server's own "I wrote the manifest" flag: the
+ * SCHOOL tab only mentions a save when it is set, because this module did not
+ * do the writing. Exports: renderDashboard (also `default`), esc,
+ * DASHBOARD_VIEWS, STATUS_LABELS — exact shapes in DATA-API.md §5.
  *
  * There is no client JavaScript at all. The only interactive elements are
  * anchors with ?view= and one GET form for the search (plus the logout POST
@@ -85,7 +89,7 @@ const CSS = `
 *{box-sizing:border-box}
 html{color-scheme:light;scroll-behavior:smooth}
 body{margin:0;background:var(--cream);color:var(--navy);font-family:"Nunito",ui-sans-serif,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
-h1,h2,h3,.brand,.num,.tab,.chip,.btn,.th,.badge{font-family:"Fredoka",ui-rounded,system-ui,sans-serif}
+h1,h2,h3,.brand,.num,.tab,.chip,.btn,.badge{font-family:"Fredoka",ui-rounded,system-ui,sans-serif}
 h1{font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.1;margin:.2rem 0 .9rem;letter-spacing:-.01em}
 h2{font-size:1.2rem;margin:0;line-height:1.2}
 h3{font-size:1rem;margin:0}
@@ -122,6 +126,7 @@ a{color:var(--navy);text-underline-offset:3px}
 .stat--lime{border-top-color:var(--lime)}
 .stat--coral{border-top-color:var(--coral)}
 .stat--plum{border-top-color:var(--plum)}
+.stat--grey{border-top-color:var(--muted)}
 .stat-label{font-size:.82rem;font-weight:800;color:var(--muted);letter-spacing:.02em;margin:0}
 .num{font-size:clamp(2.1rem,6vw,2.9rem);font-weight:700;line-height:1;margin:.2rem 0 0;font-variant-numeric:tabular-nums}
 .unit{font-size:.85rem;font-weight:800;color:var(--muted);margin:0}
@@ -208,7 +213,7 @@ function chip(text, tone) {
   return `<span class="chip chip--${tone}">${esc(text)}</span>`;
 }
 
-function paidChip(row, date) {
+function paidChip(row) {
   if (row.paid) return chip("pagada (marcada a mano)", "green");
   if (row.overdue) return chip(`sin pago · venció ${row.due ?? "sin fecha"}`, "coral");
   if (row.due) return chip(`sin pago · vence ${row.due}`, "orange");
@@ -254,7 +259,7 @@ function viewHoy(manifest, store, t) {
     chip(`${c.children} niños y niñas`, "sky"),
     chip(`${c.enrolments} matrículas`, "plum"),
     chip(`${ENROLMENT_STATUSES.map((s) => `${c.byStatus[s] ?? 0} ${s}`).join(" · ")}`, "none"),
-    c.overdue ? chip(`${pluralCount(c.overdue, "vencida", "vencidas")}`, "coral") : chip("nada vencido", "green"),
+    c.overdue ? chip(`${pluralCount(c.overdue, "pago vencido", "pagos vencidos")}`, "coral") : chip("nada vencido", "green"),
   ].join("");
 
   return `<section class="section">
@@ -279,7 +284,7 @@ function viewPipeline(manifest, store, p) {
     <p class="note">${p.threads.open ? `${pluralCount(p.threads.open, "abierta y sin respuesta", "abiertas y sin respuesta")} · ${p.threads.answered} ya contestadas` : "todo contestado"}</p>
   </div>
   <div class="tw"><table>
-    <caption>Primitiva <code>communication</code>: el hilo existe porque un fun del manifiesto recibió un mensaje. Aquí se lee; contestar se hace en el buzón de verdad.</caption>
+    <caption>Primitiva <code>communication</code>: cada hilo existe porque un funnel del manifiesto recibió un correo. Aquí se lee; contestar se hace en el buzón de verdad, no en esta página.</caption>
     <thead><tr><th scope="col">Asunto</th><th scope="col">Familia</th><th scope="col">Referencias</th><th scope="col">Último mensaje</th><th scope="col">Espera</th></tr></thead>
     <tbody>${p.threads.items
       .map(
@@ -329,9 +334,9 @@ function viewPipeline(manifest, store, p) {
             (r) => `<tr>
   <th scope="row" class="ref">${esc(r.ref)}</th>
   <td><span class="strong">${esc(r.child)}</span>, ${esc(r.childAge)} años<br><span class="note">${esc(r.parentName)}</span></td>
-  <td>${r.inManifest ? esc(r.programName ?? r.programCode) : `<span class="strong">${esc(r.programCode)}</span><br><span class="note">no está en el manifiesto</span>`}${r.programPlace ? `<br><span class="note">${esc(r.programPlace)}</span>` : ""}</td>
+  <td>${r.inManifest ? esc(r.programName ?? r.programCode) : `<span class="strong">${esc(r.programCode)}</span><br><span class="note">no está en el manifiesto</span>`}${r.programPlace ? `<br><span class="note">${esc(r.programPlace)}</span>` : ""}${r.ageInsideRange === false ? `<br>${chip(`edad ${r.childAge} fuera del rango ${r.programAges} del manifiesto`, "coral")}` : ""}</td>
   <td class="num-col">${esc(formatAmount(r.amount, r.currency, r.unit))}${r.pricePublished === false ? `<br><span class="note">precio no publicado</span>` : ""}${r.amountMatchesManifest === false ? `<br>${chip(`el registro dice ${formatAmount(r.amountRecorded, r.currency)}`, "coral")}` : ""}</td>
-  <td>${paidChip(r, null)}</td>
+  <td>${paidChip(r)}</td>
   <td>${proofChip(r)}${r.proofFilename ? `<br><span class="note ref">${esc(r.proofFilename)} · ${esc(formatBytes(r.proofSize))} · ${esc(r.proofUploaded ?? "")}</span>${r.proofNote ? `<br><span class="note">${esc(r.proofNote)}</span>` : ""}` : ""}</td>
 </tr>`,
           )
@@ -431,6 +436,9 @@ function viewMoney(manifest, store, m) {
 /* --------------------------------- PEOPLE -------------------------------- */
 function viewPeople(manifest, store, q, briefing) {
   const currency = manifest?.programs?.[0]?.price?.currency ?? "THB";
+  // the search hints come from the school's own contract, not from lotus
+  const domain = manifest?.identity?.domain ?? "la escuela";
+  const refShape = `${String(manifest?.programs?.[0]?.code ?? "REF").split("-")[0]}-XXXXXX`;
   const programNames = new Map((manifest?.programs ?? []).map((p) => [p.code, p.name]));
   const res = store.people(q);
   const children = briefing?.counts?.children ?? res.items.reduce((n, p) => n + p.children.length, 0);
@@ -450,7 +458,7 @@ function viewPeople(manifest, store, q, briefing) {
 
   const feedback = res.query
     ? res.count === 0
-      ? `<p class="clay callout callout--warn"><strong>Sin coincidencias para «${esc(res.query)}».</strong> Se busca por nombre del adulto o del niño, correo y referencia (formato LVIS-XXXXXX). ${res.totalFamilies} familias hay en el almacén.</p>`
+      ? `<p class="clay callout callout--warn"><strong>Sin coincidencias para «${esc(res.query)}».</strong> Se busca por nombre del adulto o del niño, correo y referencia (formato ${esc(refShape)}). ${res.totalFamilies} familias hay en el almacén.</p>`
       : `<p class="note">${pluralCount(res.count, "familia coincide", "familias coinciden")} con «${esc(res.query)}».</p>`
     : `<p class="note">Mostrando las primeras ${res.shown} de ${res.totalFamilies} familias. Escribe para buscar por nombre, correo o referencia.</p>`;
 
@@ -461,7 +469,7 @@ function viewPeople(manifest, store, q, briefing) {
         <legend>Buscar familias</legend>
         <label for="q">Nombre, correo o referencia
           <span class="hint">Sin distinción de mayúsculas. Vacío = las primeras 8.</span>
-          <input id="q" name="q" type="search" value="${esc(res.query)}" autocomplete="off" placeholder="p. ej. Nattaya, @lvis.example o LVIS-GF2WF9">
+          <input id="q" name="q" type="search" value="${esc(res.query)}" autocomplete="off" placeholder="p. ej. un nombre, @${esc(domain)} o ${esc(refShape)}">
         </label>
         <input type="hidden" name="view" value="people">
         <button class="btn min-h-11" type="submit">Buscar</button>
@@ -495,7 +503,7 @@ function viewStories(manifest, store) {
     : `<tr><td colspan="4" class="note">La cola está vacía en el almacén de demo.</td></tr>`;
 
   return `<section class="section">
-    ${head({ kicker: "STORIES", title: "Cola de borradores", sub: `${s.count} borradores en la cola · blog en el manifiesto: ${s.blogEnabled ? "activado" : "desactivado"} · consentimiento de imágenes: ${esc(s.mediaConsent ?? "sin declarar")} · los idiomas se ciñen a los que declara <code>identity.locales</code>.` })}
+    ${head({ kicker: "STORIES", title: "Cola de borradores", sub: `${s.count} borradores en la cola · blog en el manifiesto: ${s.blogEnabled ? "activado" : "desactivado"} · módulo de marketing: ${s.marketingEnabled ? "activado" : "apagado"} · consentimiento de imágenes: ${esc(s.mediaConsent ?? "sin declarar")} · los idiomas se ciñen a los que declara <code>identity.locales</code>.` })}
     <div class="tw clay" style="padding:0;overflow:hidden"><table>
       <caption>Cada fila es una entrada de <code>content.json</code>. Ninguna se ha publicado: el estado lo escribe una persona, no esta página.</caption>
       <thead><tr><th scope="col">Borrador</th><th scope="col">Estado</th><th scope="col">Datos</th><th scope="col">Autoría</th></tr></thead>
@@ -507,7 +515,7 @@ function viewStories(manifest, store) {
 }
 
 /* --------------------------------- SCHOOL -------------------------------- */
-function viewSchool(manifest, store) {
+function viewSchool(manifest, store, opts = {}) {
   let text = null;
   let problem = null;
   if (!store.manifestPath) {
@@ -533,6 +541,7 @@ function viewSchool(manifest, store) {
       sub: `Texto leído del disco en cada petición — la fuente de verdad, no una copia en memoria. ${store.manifestPath ? "" : "(sin ruta)"}`,
     })}
     <p class="clay callout callout--quiet"><strong>Solo lectura, y así se queda.</strong> Editar, plegar por secciones y validar el YAML vive en Topos Studio (<code>manifold/studio.mjs</code>), no en este panel; el integrador enlaza ahí. Este dashboard solo lee el manifiesto para poner nombres e importes reales.</p>
+    ${opts.folded ? `<p class="clay callout" style="border-left-color:var(--lime)"><strong>El servidor dice que el manifiesto se guardó.</strong> El texto de abajo es la lectura del disco hecha en esta misma petición, así que si algo no coincide con lo que acabas de escribir, lo que manda es lo que se ve. <code>${esc(store.manifestPath ?? "sin ruta")}</code></p>` : ""}
     ${problem ? `<p class="clay callout callout--warn">${esc(problem)}</p>` : ""}
     <pre class="yaml" tabindex="0" aria-label="Manifiesto YAML de la escuela, solo lectura">${text === null ? "<sin texto>" : esc(text)}</pre>
     <p class="note" style="margin-top:12px">Ruta: <code class="ref">${esc(store.manifestPath ?? "—")}</code> · Slug del almacén de demo: <code class="ref">${esc(store.slug)}</code> · Datos en <code class="ref">${esc(store.dir)}</code></p>
@@ -599,7 +608,7 @@ export function renderDashboard(manifest, store, session, opts = {}) {
       else if (view === "money") bodyHtml = viewMoney(manifest, store, store.money());
       else if (view === "people") bodyHtml = viewPeople(manifest, store, opts.q ?? "", briefing);
       else if (view === "stories") bodyHtml = viewStories(manifest, store);
-      else if (view === "school") bodyHtml = viewSchool(manifest, store);
+      else if (view === "school") bodyHtml = viewSchool(manifest, store, opts);
       else
         bodyHtml = `<section class="section">
         ${head({ kicker: "404", title: `La vista «${view}» no existe`, sub: `Las vistas de este panel son: ${VIEWS.map((v) => v.label).join(", ")}.` })}
@@ -615,7 +624,14 @@ export function renderDashboard(manifest, store, session, opts = {}) {
 
   const t = briefing;
 
-  const tabs = VIEWS.map((v) => `<a class="tab" href="?view=${esc(v.key)}"${v.key === view ? ' aria-current="page"' : ""}>${esc(v.label)}</a>`).join("");
+  // v0.1 module-registry support (additive): the server may pass
+  // bodyOverride (a module's body inside this shell) and extraTabs
+  // (registered modules). With neither, the six core views behave
+  // exactly as before — including opts.folded on the school tab.
+  if (typeof opts.bodyOverride === "string") bodyHtml = opts.bodyOverride;
+
+  const allTabs = [...VIEWS.map((v) => ({ key: v.key, label: v.label, href: `?view=${v.key}` })), ...(opts.extraTabs ?? [])];
+  const tabs = allTabs.map((v) => `<a class="tab" href="${esc(v.href)}"${v.key === view ? ' aria-current="page"' : ""}>${esc(v.label)}</a>`).join("");
 
   let meta = null;
   try {
@@ -624,7 +640,7 @@ export function renderDashboard(manifest, store, session, opts = {}) {
     meta = null;
   }
 
-  const title = `${VIEWS.find((v) => v.key === view)?.label ?? "Hoy"} · ${schoolName}`;
+  const title = `${VIEWS.find((v) => v.key === view)?.label ?? opts.title ?? "Hoy"} · ${schoolName}`;
 
   return `<!doctype html>
 <html lang="es">
