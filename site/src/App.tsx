@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import TerminalTypewriter from "./components/TerminalTypewriter";
 
 const REPO = "https://github.com/amlkr/topos";
@@ -7,15 +7,16 @@ const STUDIO = "https://unions-metals-shortly-skill.trycloudflare.com";
 /* ---------------- the mascot: a hand-drawn clay tumbler ---------------- */
 function Tumbler() {
   const [wobbling, setWobbling] = useState(false);
+  const wobbleTimer = useRef<number | undefined>(undefined);
   const wobble = () => {
     setWobbling(true);
-    window.setTimeout(() => setWobbling(false), 950);
+    window.clearTimeout(wobbleTimer.current);
+    wobbleTimer.current = window.setTimeout(() => setWobbling(false), 950);
   };
   return (
     <button
       type="button"
       onClick={wobble}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") wobble(); }}
       aria-label="A friendly clay tumbler toy — click to wobble it"
       className={`tumbler block h-40 w-40 cursor-pointer rounded-full sm:h-52 sm:w-52 ${wobbling ? "wobbling" : ""}`}
     >
@@ -43,24 +44,28 @@ const COLORS = [
 ] as const;
 const WORDS = [["camps", "camp"], ["activities", "activity"], ["courses", "course"], ["clubs", "club"]] as const;
 
-function SchoolPreview({ name, color, word, locales }: { name: string; color: string; word: string; locales: string[] }) {
-  const light = color === "#EEF773" || color === "#3BD3FD";
+function SchoolPreview({ name, color, word, plural, locales }: { name: string; color: string; word: string; plural: string; locales: string[] }) {
+  // WCAG: navy #001433 passes on every palette colour (orange 6.88, sky, lime,
+  // berry…) EXCEPT the two dark ones — plum #46022F and green #035D44 — where
+  // cream is used instead (11.8 and 6.8). White-on-orange (2.2) is never used.
+  const dark = color === "#46022F" || color === "#035D44";
+  const onColor = dark ? "#EFEEEC" : "#001433";
   return (
     <div className="clay overflow-hidden rounded-clay bg-card">
-      <div className="px-6 py-8" style={{ background: color, color: light ? "#001433" : "#fff" }}>
+      <div className="px-6 py-8" style={{ background: color, color: onColor }}>
         <p className="font-mono text-xs uppercase tracking-widest opacity-80">your school</p>
         <p className="mt-1 font-[Fredoka] text-2xl font-bold leading-tight">{name || "Your school"}</p>
       </div>
       <div className="space-y-3 px-6 py-5 text-navy">
-        <p className="text-sm">This term at {name || "our school"}: <strong>{word}s for everyone</strong>.</p>
+        <p className="text-sm">This term at {name || "our school"}: <strong>{plural} for everyone</strong>.</p>
         <div className="flex flex-wrap gap-2">
           {locales.map((l) => (
-            <span key={l} className="rounded-full bg-cream px-3 py-1 text-xs font-bold">{l}</span>
+            <span key={l} translate={l === "ไทย" || l === "中文" ? "no" : undefined} className="rounded-full bg-cream px-3 py-1 text-xs font-bold">{l}</span>
           ))}
         </div>
         <div className="flex gap-2 pt-1">
-          <span className="rounded-full px-4 py-2 text-xs font-extrabold" style={{ background: color, color: light ? "#001433" : "#fff" }}>
-            Enrol in {word === "camp" ? "camp" : word + "s"}
+          <span className="rounded-full px-4 py-2 text-xs font-extrabold" style={{ background: color, color: onColor }}>
+            Enrol in {word === "camp" ? "camp" : plural}
           </span>
           <span className="rounded-full border-2 border-navy/15 px-4 py-2 text-xs font-bold">Family portal</span>
         </div>
@@ -85,11 +90,13 @@ function FoldGame() {
           <label htmlFor="school-name" className="mb-2 block text-sm font-extrabold uppercase tracking-wide">Your school’s name</label>
           <input
             id="school-name"
+            name="school"
             type="text"
+            autoComplete="off"
             value={name}
             maxLength={40}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-2xl border-2 border-navy/10 bg-card px-4 py-3 text-lg font-semibold outline-none focus:border-orange"
+            className="w-full rounded-2xl border-2 border-navy/10 bg-card px-4 py-3 text-lg font-semibold focus:border-orange"
           />
         </div>
         <div>
@@ -133,6 +140,7 @@ function FoldGame() {
                 type="button"
                 onClick={() => toggleLocale(l)}
                 aria-pressed={locales.includes(l)}
+                translate={l === "ไทย" || l === "中文" ? "no" : undefined}
                 className={`min-h-11 rounded-full px-5 py-2 text-sm font-bold transition-colors ${locales.includes(l) ? "bg-green text-cream" : "bg-card text-navy hover:bg-navy/5"}`}
               >
                 {l}
@@ -142,18 +150,20 @@ function FoldGame() {
         </div>
       </div>
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <SchoolPreview name={name} color={color} word={WORDS[wordIdx][1]} locales={locales} />
-        <p className="mt-4 text-center text-sm text-navy/60">this is the real thing: the preview <em>is</em> Topos rendering your choices</p>
+        <SchoolPreview name={name} color={color} word={WORDS[wordIdx][1]} plural={WORDS[wordIdx][0]} locales={locales} />
+        <p className="mt-4 text-center text-sm text-cream/80">this is the real thing: the preview <em>is</em> Topos rendering your choices</p>
       </div>
     </div>
   );
 }
 
 /* ---------------- sections ---------------- */
-function Section({ id, kicker, title, children, className = "" }: { id: string; kicker: string; title: string; children: ReactNode; className?: string }) {
+function Section({ id, kicker, title, children, className = "", dark = false }: { id: string; kicker: string; title: string; children: ReactNode; className?: string; dark?: boolean }) {
   return (
     <section id={id} className={`mx-auto w-full max-w-6xl px-5 py-16 sm:py-24 ${className}`}>
-      <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.2em] text-green">{kicker}</p>
+      {/* kicker color set per element: text-green fails on navy/plum, so dark
+          sections use lime (~15.8:1 on navy, ~13.9:1 on plum) — no [&_p] hammer. */}
+      <p className={`mb-2 text-sm font-extrabold uppercase tracking-[0.2em] ${dark ? "text-lime" : "text-green"}`}>{kicker}</p>
       <h2 className="mb-8 max-w-2xl text-3xl font-bold leading-tight sm:text-4xl" style={{ fontFamily: "Fredoka" }}>{title}</h2>
       {children}
     </section>
@@ -264,7 +274,7 @@ export default function App() {
 
         {/* THE GAME */}
         <div className="on-dark bg-navy">
-          <Section id="fold" kicker="play with it" title="Watch your school fold — five choices, one live preview" className="text-cream [&_h2]:text-cream [&_p]:text-cream/80">
+          <Section id="fold" kicker="play with it" title="Watch your school fold — five choices, one live preview" className="text-cream" dark>
             <FoldGame />
           </Section>
         </div>
@@ -291,7 +301,7 @@ export default function App() {
             <article className="clay flex flex-col rounded-clay bg-card p-7">
               <h3 className="text-lg font-bold" style={{ fontFamily: "Fredoka" }}>Run it yourselves</h3>
               <p className="mt-1 text-4xl font-bold">$0</p>
-              <p className="text-sm text-navy/60">forever — it’s yours by license</p>
+              <p className="text-sm text-navy/70">forever — it’s yours by license</p>
               <ul className="mt-5 flex-1 list-disc space-y-1.5 pl-5 text-sm text-navy/75">
                 <li>Full platform, source open</li>
                 <li>Your servers, your data</li>
@@ -314,7 +324,7 @@ export default function App() {
             <article className="clay flex flex-col rounded-clay bg-card p-7">
               <h3 className="text-lg font-bold" style={{ fontFamily: "Fredoka" }}>Learning packs</h3>
               <p className="mt-1 text-4xl font-bold">per pack</p>
-              <p className="text-sm text-navy/60">the creative layer</p>
+              <p className="text-sm text-navy/70">the creative layer</p>
               <ul className="mt-5 flex-1 list-disc space-y-1.5 pl-5 text-sm text-navy/75">
                 <li>Structured weeks &amp; activities</li>
                 <li>Ages, materials, objectives</li>
@@ -342,9 +352,9 @@ export default function App() {
 
         {/* UNDER THE HOOD — small, for the IT friend */}
         <div className="on-dark border-t-4 border-navy bg-plum">
-          <Section id="geeks" kicker="for your IT friend" title="Under the hood, it’s three honest commands" className="[&_h2]:text-cream [&_p]:text-cream/75">
-            <div className="mb-6 max-w-2xl text-cream/80">
-              <p>The whole platform is one manifest, one validator and one folder of pages. If your developer friend wants the tour, it takes a minute — and the contract tests are public.</p>
+          <Section id="geeks" kicker="for your IT friend" title="Under the hood, it’s three honest commands" className="text-cream" dark>
+            <div className="mb-6 max-w-2xl">
+              <p className="text-cream/80">The whole platform is one manifest, one validator and one folder of pages. If your developer friend wants the tour, it takes a minute — and the contract tests are public.</p>
             </div>
             <TerminalTypewriter />
           </Section>
@@ -362,7 +372,7 @@ export default function App() {
             </svg>
             <p className="text-sm text-cream/70">topos · each school, its own place<br />engine &amp; spec under <a href={`${REPO}/blob/main/LICENSE`} target="_blank" rel="noopener noreferrer" className="underline decoration-orange">AGPL-3.0</a></p>
           </div>
-          <p className="font-mono text-xs text-cream/50">made between Chiang Mai and the internet · demo tunnels are temporary, the license is not</p>
+          <p className="font-mono text-xs text-cream/60">made between Chiang Mai and the internet · demo tunnels are temporary, the license is not</p>
         </div>
       </footer>
     </div>

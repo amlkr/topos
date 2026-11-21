@@ -48,7 +48,6 @@ body {
 :focus-visible {
   outline: 3px solid var(--color-navy);
   outline-offset: 3px;
-  border-radius: 8px;
 }
 .on-dark :focus-visible { outline-color: var(--color-lime); }
 
@@ -64,6 +63,9 @@ body {
 @keyframes marquee { to { transform: translateX(-50%); } }
 .marquee-track { animation: marquee 26s linear infinite; }
 .marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+/* WCAG 2.2.2 Pause, Stop, Hide: hover/pause is unreachable on touch,
+   so on devices with no hover the marquee simply does not move. */
+@media (hover: none) { .marquee-track { animation: none; } }
 
 /* the tumbler mascot wobbles like a roly-poly toy */
 @keyframes wobble {
