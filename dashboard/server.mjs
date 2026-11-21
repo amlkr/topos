@@ -128,11 +128,15 @@ const server = createServer(async (req, res) => {
     try {
       if (req.method === "POST") {
         const form = await readBody(req);
-        const out = pub.renderPublic ? await pub.renderPublic(ctx, form) : { html: "<p>renderPublic pendiente</p>" };
+        let out = pub.renderPublic ? await pub.renderPublic(ctx, form) : { html: "<p>renderPublic pendiente</p>" };
+        if (typeof out === "string") out = { html: out }; // modules may return a bare page; the POST branch used to swallow it (families agent caught this)
         if (out?.redirect) { res.writeHead(303, { location: out.redirect }); return res.end(); }
         return send(res, out?.status ?? 200, out?.html ?? "");
       }
-      return send(res, 200, pub.renderPublic ? await pub.renderPublic(ctx) : "<p>renderPublic pendiente</p>");
+      {
+        const got = pub.renderPublic ? await pub.renderPublic(ctx) : { html: "<p>renderPublic pendiente</p>" };
+        return send(res, got?.status ?? 200, typeof got === "string" ? got : (got?.html ?? ""));
+      }
     } catch (e) {
       return send(res, 500, `<p style="font-family:sans-serif;padding:2rem">El portal de familias falló honestamente: ${esc(e.message)}</p>`);
     }
@@ -183,7 +187,8 @@ const server = createServer(async (req, res) => {
     const ctx = { manifest, store, session: who, slug: store.slug, query: url.searchParams };
     if (req.method === "POST") {
       if (typeof mod.handle !== "function") return send(res, 405, problemsPage(["este módulo no acepta escrituras"]));
-      const out = await mod.handle(ctx, await readBody(req));
+      let out = await mod.handle(ctx, await readBody(req));
+      if (typeof out === "string") out = { html: out };
       if (out?.redirect) { res.writeHead(303, { location: out.redirect }); return res.end(); }
       return send(res, out?.status ?? 200, page(mod, ctx, out?.html ?? ""));
     }
