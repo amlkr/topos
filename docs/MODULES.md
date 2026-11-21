@@ -4,17 +4,21 @@
 > `MODULE-API.md`. El registro los descubre solos; el nav y los roles
 > salen de su `meta`. Así el producto crece sin pelearse.
 
-## Estado (2026-11-21, fase módulos)
+## Estado (2026-11-21, fase TALLYHOUSE + agentes)
 
 | Orden | Módulo | Estado | Roles | Qué es real hoy |
 |---|---|---|---|---|
 | 0-9 | Core (Hoy, Pipeline, Money, People, Stories, School) | **vivo** | todos/staff | las cinco primitivas sembradas, manifiesto editable con contrato que muerde |
-| 10 | **crm** | VIVO | director, admissions | leads con estados y seguimiento, filtro, seed demo ficticio |
+| 10 | **crm** | VIVO — estados leídos del funnel del manifiesto | director, admissions | leads con estados y seguimiento, filtro, seed demo ficticio |
 | 20 | **finance** | VIVO | director, finance | libro de gastos propio + lo cobrado/pendiente LEÍDO del core (nunca duplicado) |
 | 30 | **comms** | VIVO | todo el staff | anuncios fijados + tareas por rol |
 | 40 | **curriculum** | VIVO | director, coach | packs como datos + `spec/pack.schema.json` estricto + pack sembrado |
 | 50 | **marketing** | **stub honesto** (integrador) | director | la cola del core en vivo + la lista de lo que falta; sin botón "publicar" porque no hay conector |
 | 80 | **familias** | VIVO (público /familias) | público /familias + helper staff | portal por token de capacidad, solo SU familia, rechazo genérico |
+| 70 | **admisiones-agent** | VIVO v0 | director, admissions | el primer agente: reglas deterministas + voz del manifiesto; bandeja «esperando a una persona»; decisiones permanentes con actor |
+| 85 | **journal** | VIVO | director | JSONL quién/cuándo/qué; solo éxitos; refusales por rol NO se escriben; fold-refused sí |
+| — | **funnel como dato** | VIVO | — | admissions.funnel en el schema; contrato muerde terminales deshonestos; 66/66 tests |
+| — | **features gating** | VIVO | — | tabs Y URLs se apagan por operations.features (marketing: false en Lotus → 403 honesto) |
 | 90 | example | vivo (test del contrato) | todos | la prueba de que el registry funciona |
 
 ## El orden no es cosmético
