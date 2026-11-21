@@ -148,7 +148,7 @@ export function render(ctx) {
       #comms .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
       #comms .filters a{text-decoration:none}
       #comms details.done{background:var(--card);border:2px dashed var(--line);border-radius:1rem;padding:10px 16px;margin-top:14px}
-      #comms details.done>summary{font-family:"Fredoka",ui-rounded,system-ui,sans-serif;font-weight:700;cursor:pointer}
+      #comms details.done>summary{font-family:"Archivo",ui-rounded,system-ui,sans-serif;font-weight:700;cursor:pointer}
     </style>
     <div id="comms">
     ${demoVisible ? `<p class="clay callout callout--quiet">Vista de demostración: los elementos con la etiqueta «demo» son ficticios. Se siembran solo mientras el tablero está vacío; lo que el equipo publique o asigne a partir de ahora es real.</p>` : ""}

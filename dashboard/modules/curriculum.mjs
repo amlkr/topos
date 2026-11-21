@@ -146,7 +146,7 @@ const chip = (text) => `<span class="chip" style="margin:2px 4px 2px 0">${esc(te
 
 function packCard(p) {
   const weeks = Array.isArray(p.weeks) ? p.weeks.length : 0;
-  return card(`<h3 style="margin:0 0 6px;font-family:Fredoka,ui-rounded,system-ui,sans-serif">${esc(p.name)}</h3>
+  return card(`<h3 style="margin:0 0 6px;font-family:Archivo,ui-rounded,system-ui,sans-serif">${esc(p.name)}</h3>
     <p style="margin:0 0 4px"><a class="btn" style="display:inline-block;text-decoration:none" href="/m/curriculum?pack=${encodeURIComponent(String(p.code))}">${esc(p.code)} →</a></p>
     <p class="note" style="margin:8px 0 0">Programa ${esc(p.program)} · edades ${esc(p.ages)} · ${weeks} ${weeks === 1 ? "semana" : "semanas"} · ${esc(p.term)}</p>`);
 }
@@ -202,7 +202,7 @@ export function render(ctx) {
   const cards = data.packs.map(packCard).join("");
   return `${head({ kicker: "currículo", title: "Packs de clase", sub: "la clase como dato: semanas, actividades, materiales y objetivos — editable y validable, como el manifiesto" })}
     ${cards ? `<div class="grid" style="margin-bottom:26px">${cards}</div>` : `<p class="clay callout">No hay packs todavía.</p>`}
-    <h2 style="font-family:Fredoka,ui-rounded,system-ui,sans-serif;margin:0 0 8px">Nuevo borrador</h2>
+    <h2 style="font-family:Archivo,ui-rounded,system-ui,sans-serif;margin:0 0 8px">Nuevo borrador</h2>
     ${draftForm()}
   ${endHead}`;
 }

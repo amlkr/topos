@@ -176,32 +176,35 @@ function publicPage(title, body, identity) {
 <title>${esc(title)} · ${esc(name)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--cream:#EFEEEC;--navy:#001433;--orange:#FF7714;--sky:#3BD3FD;--lime:#EEF773;--coral:#FB4450;--green:#035D44;--muted:#3B4658;--card:#fff}
+/* Tallyhouse re-skin (owner design pivot 2026-11-21): flat blocks, 2px ink
+   borders, radius 0, paper/ink/tangerine/lavender/sage. Class names kept —
+   the body builders in this file were written against them. */
+:root{--paper:#fff;--ink:#0b0b0b;--tangerine:#fe7141;--lavender:#cdabfe;--sage:#d1ddd3;--graphite:#595959}
 *{box-sizing:border-box}
-body{margin:0;background:var(--cream);color:var(--navy);font-family:Nunito,system-ui,sans-serif;line-height:1.55}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.45}
 .wrap{max-width:680px;margin:0 auto;padding:20px 16px 56px}
-header.school{padding:18px 2px 6px}
+header.school{padding:18px 2px 6px;border-bottom:3px solid var(--ink)}
 .band{display:flex;align-items:center;gap:10px}
-.dot{width:40px;height:40px;border-radius:50%;background:var(--orange);color:var(--navy);display:grid;place-items:center;font-family:Fredoka;font-weight:700;font-size:1.3rem;flex:none}
-h1{font-family:Fredoka;margin:0;font-size:1.45rem;line-height:1.2}
-h2{font-family:Fredoka;margin:0 0 10px;font-size:1.15rem}
-.alt{font-family:Fredoka;font-weight:600;color:var(--muted);font-size:.85rem;margin-left:auto}
-.tag{color:var(--muted);margin:6px 0 0;font-size:.9rem}
-.card{background:var(--card);border-radius:1.75rem;padding:20px;margin-top:16px;box-shadow:0 10px 0 rgba(0,20,51,.08),0 24px 48px rgba(0,20,51,.10)}
+.dot{width:40px;height:40px;background:var(--tangerine);color:var(--ink);display:grid;place-items:center;font-family:Archivo;font-weight:600;font-size:1.3rem;flex:none;border:2px solid var(--ink)}
+h1{font-family:Archivo;margin:0;font-size:1.45rem;line-height:1.05;letter-spacing:-.03em;font-weight:500}
+h2{font-family:Archivo;margin:0 0 10px;font-size:1.15rem;font-weight:500;letter-spacing:-.02em}
+.alt{font-family:Archivo;font-weight:600;color:var(--graphite);font-size:.85rem;margin-left:auto}
+.tag{color:var(--graphite);margin:6px 0 0;font-size:.9rem}
+.card{background:var(--paper);border:2px solid var(--ink);padding:20px;margin-top:16px}
 .row{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between}
-.chip{display:inline-block;font-family:Fredoka;font-weight:600;font-size:.8rem;padding:4px 12px;border-radius:999px;color:var(--navy)}
-.chip.lime{background:var(--lime)}
-.chip.orange{background:var(--orange)}
-.chip.coral{background:var(--coral);color:var(--cream)}
-.chip.sky{background:var(--sky)}
-.kv{margin:6px 0;color:var(--muted);font-size:.95rem}
-.kv strong{color:var(--navy)}
-.note{color:var(--muted);font-size:.82rem;margin:12px 0 0}
-.demo{background:var(--card);border-radius:1.75rem;padding:14px 20px;font-size:.85rem;color:var(--muted);margin-top:16px;box-shadow:0 10px 0 rgba(0,20,51,.08)}
-a{color:var(--green);font-weight:700}
-a:focus-visible{outline:3px solid var(--navy);outline-offset:2px;border-radius:8px}
+.chip{display:inline-block;font-family:Archivo;font-weight:600;font-size:.8rem;padding:4px 12px;border:2px solid var(--ink);color:var(--ink)}
+.chip.lime{background:var(--sage)}
+.chip.orange{background:var(--tangerine)}
+.chip.coral{background:var(--ink);color:var(--tangerine)}
+.chip.sky{background:var(--lavender)}
+.kv{margin:6px 0;color:var(--graphite);font-size:.95rem}
+.kv strong{color:var(--ink)}
+.note{color:var(--graphite);font-size:.82rem;margin:12px 0 0}
+.demo{background:var(--sage);border:2px solid var(--ink);padding:14px 20px;font-size:.85rem;color:var(--ink);margin-top:16px}
+a{color:var(--ink);font-weight:700;background:var(--lavender);padding:0 4px;text-decoration:none;border:2px solid var(--ink)}
+a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 ul{margin:8px 0 0;padding-left:1.2em}
 li{margin:4px 0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
