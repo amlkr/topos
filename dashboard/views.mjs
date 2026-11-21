@@ -165,7 +165,7 @@ tbody tr:nth-child(even){background:rgba(0,20,51,.025)}
 .search .hint{display:block;font-weight:400;font-size:.78rem;color:var(--muted);margin-top:4px}
 input[type=search]{display:block;width:100%;min-height:2.75rem;margin-top:6px;padding:0 14px;border:2px solid var(--navy);border-radius:14px;background:var(--cream);color:var(--navy);font:inherit;font-size:1rem}
 .min-h-11{min-height:2.75rem}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;background:var(--orange);color:var(--navy);border:2px solid var(--navy);border-radius:999px;padding:.5rem 1.25rem;font-weight:700;font-size:.95rem;cursor:pointer;text-decoration:none;box-shadow:0 5px 0 rgba(0,20,51,.16)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:2.75rem;background:var(--orange);color:var(--navy);border:2px solid var(--navy);border-radius:999px;padding:.5rem 1.25rem;font-weight:700;font-size:.95rem;cursor:pointer;text-decoration:none;box-shadow:0 5px 0 rgba(0,20,51,.16)}
 .btn:hover{transform:translateY(-2px)}
 .btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,20,51,.16)}
 .btn--ghost{background:var(--card);box-shadow:none}
