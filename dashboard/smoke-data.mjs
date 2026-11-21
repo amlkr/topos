@@ -217,7 +217,8 @@ for (const view of [...DASHBOARD_VIEWS, "does-not-exist"]) {
     assert.ok(html[view].includes("<html lang=\"es\">"), "no language on the document");
     assert.ok(html[view].includes('name="viewport"'), "no viewport");
     assert.ok(html[view].includes("family=Archivo"), "the design system's font (Archivo, Tallyhouse reskin 2026-11-21) is not requested");
-    assert.match(html[view], /class="[^"]*\bclay\b/, "no clay card");
+    if (view === "hoy") assert.match(html[view], /class="brief"/, "no briefing surface");
+    else assert.match(html[view], /class="[^"]*\bclay\b/, "no clay card");
     assert.ok(html[view].includes("prefers-reduced-motion"), "no reduced-motion block");
     assert.ok(html[view].includes("focus-visible"), "no focus ring");
     assert.ok(html[view].includes(SCHOOL), "the manifest school name is missing");
@@ -234,8 +235,8 @@ check("HOY shows the four morning lines with real numbers", () => {
   const page = html.hoy;
   assert.ok(page.includes("HOY"), "no HOY marker");
   assert.ok(page.includes(">3<"), "the 3 open threads are not on screen");
-  assert.ok(page.includes(">2<"), "the 2 proofs to verify are not on screen");
-  assert.ok(page.includes(">5<"), "the 5 unpaid enrolments are not on screen");
+  assert.ok(page.includes("2 resguardos por verificar"), "the 2 proofs to verify are not on screen");
+  assert.ok(page.includes("5 sin pago"), "the 5 unpaid enrolments are not on screen");
   assert.ok(page.includes("topos · panel"), "no sidebar brand");
   assert.ok(page.includes('class="badge"'), "no role badge");
   assert.ok(page.includes('action="/logout"'), "no logout form");
