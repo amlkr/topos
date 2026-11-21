@@ -7,6 +7,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  - reduced-motion honored: the final state renders instantly (a11y gate
  *    from the ui-ux-pro-max priority table)
  *  - commands are REAL: outputs were copied from actual runs of this repo.
+ * v3 restyle (template language): flat window — no radius, no clay shadow —
+ *  bg ink #0b0b0b with 2px fog border on the ink section, text paper (19.68),
+ *  output fog (8.28), prompt + cursor lavender (10.17, all measured — see
+ *  index.css). The three macOS traffic-light dots stay: window styling, noted
+ *  as intentional in the old-token sweep.
  */
 
 type Command = { id: string; command: string; output?: string };
@@ -90,18 +95,18 @@ export default function TerminalTypewriter() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-clay border border-cream/15 bg-navy shadow-[0_30px_80px_rgba(99,102,241,0.12)]">
-      <div className="flex items-center justify-between border-b border-cream/15 px-4 py-3">
+    <div className="mx-auto w-full max-w-3xl overflow-hidden border-2 border-fog bg-ink">
+      <div className="flex items-center justify-between border-b border-fog px-4 py-3">
         <div className="flex items-center gap-2" aria-hidden>
           <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
           <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
           <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-          <span className="ml-3 font-mono text-xs text-cream/75">manifold — zsh</span>
+          <span className="ml-3 font-mono text-xs text-fog">manifold — zsh</span>
         </div>
         <button
           type="button"
           onClick={copy}
-          className="min-h-11 rounded-lg px-3 font-mono text-xs text-cream/75 transition-colors hover:bg-cream/10 hover:text-cream"
+          className="min-h-11 px-3 font-mono text-xs text-fog transition-colors hover:bg-paper/10 hover:text-paper"
           aria-label="Copy the commands shown in this terminal"
         >
           {copied === "ok" ? "copied ✓" : copied === "fail" ? "copy failed" : "copy"}
@@ -119,13 +124,13 @@ export default function TerminalTypewriter() {
           const text = typing ? cmd.command.slice(0, chars) : cmd.command;
           return (
             <div key={cmd.id}>
-              <p className="text-cream" translate="no">
-                <span className="mr-2 select-none text-lime">$</span>
+              <p className="text-paper" translate="no">
+                <span className="mr-2 select-none text-lavender">$</span>
                 {text}
-                {typing && <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-lime align-middle" aria-hidden />}
+                {typing && <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-lavender align-middle" aria-hidden />}
               </p>
               {(i < line || showOutput) && cmd.output && (
-                <p className="mt-1 whitespace-pre-wrap text-cream/75" translate="no">{cmd.output}</p>
+                <p className="mt-1 whitespace-pre-wrap text-fog" translate="no">{cmd.output}</p>
               )}
             </div>
           );

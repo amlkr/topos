@@ -1,32 +1,69 @@
 @import "tailwindcss";
 
-/* Topos v2 — friendly school palette (owner, 2026-11-21).
-   Contrast pairs used for text were computed (WCAG):
-   navy #001433 on cream #EFEEEC ≈ 14.7 ✓ · navy on orange #FF7714 ≈ 6.4 ✓
-   navy on sky #3BD3FD ≈ 9.7 ✓ · navy on lime #EEF773 ≈ 13 ✓
-   cream on green #035D44 ≈ 7.0 ✓ · cream on plum #46022F ≈ 11.8 ✓
-   coral #FB4450 is reserved for large text/fills (navy on coral ≈ 4.8). */
+/* Topos v3 — flat-block design language taken from the MIT template
+   "Tallyhouse" (8b.com/templates/tallyhouse, github.com/8bsite/accountant-website-template,
+   MIT code license, read in full on 2026-11-21). The clay v2 palette is gone from the
+   product surfaces; template tokens mapped to semantic roles:
+
+     old (v2 clay)              → new (v3 template)        role
+     cream  #EFEEEC             → paper #ffffff (--color-paper)   page ground, card fill
+     navy   #001433             → ink   #0b0b0b (--color-ink)     body text, dark blocks
+     orange #FF7714             → tangerine #fe7141 (--color-tangerine) CTA fill (INK text)
+     sky    #3BD3FD             → lavender #cdabfe (--color-lavender)   section block bg, mark
+     lime   #EEF773             → sage   #d1ddd3 (--color-sage)         section block bg
+     green/plum muted roles     → graphite #595959 (--color-graphite)   muted text on light
+     green/plum dark blocks     → ink + fog #a8a8a8 (--color-fog)       muted text on dark
+     (--color-fog is the template's own --color-7, used by it for muted text on ink.)
+
+   WCAG pairs — MEASURED 2026-11-21 with python3 (relative-luminance formula, not claimed):
+     ink on paper ................. 19.68 ✓   body/headings on light, paper on ink
+     paper on ink ................. 19.68 ✓   dark-block body text
+     ink on tangerine .............  7.17 ✓   CTA label + body on tangerine blocks
+     ink on lavender .............. 10.17 ✓   body on lavender blocks
+     ink on sage .................. 14.05 ✓   body on sage blocks
+     graphite on paper ............  7.00 ✓   muted body (small text)
+     graphite on sage .............  5.00 ✓   muted body on sage
+     graphite on lavender .........  3.62 ✗   NOT used for body (large/3.0 only)
+     graphite on tangerine ........  2.55 ✗   NEVER used
+     fog on ink ...................  8.28 ✓   muted text on dark blocks
+     lavender on ink .............. 10.17 ✓   terminal prompt / output
+     tangerine on ink .............  7.17 ✓   focus rings, eyebrows, accents on ink
+     sage on ink .................. 14.05 ✓   icon strokes on ink
+     paper on tangerine ...........  2.74 ✗   NEVER — this is why CTA text is ink,
+                                               exactly as the template does (m-btn-2)
+     paper on graphite ............  7.00 ✓   text on graphite swatch (dark branch)
+     ink on fog ...................  8.28 ✓   text on fog swatch (light branch)
+     ink on graphite ..............  2.81 ✗   NEVER
+     paper on fog .................  2.38 ✗   NEVER
+   Rule kept: every body-text pair ≥ 4.5, every large-text pair ≥ 3.0.
+
+   Fonts: template uses proprietary Google Sans → honest free substitution is
+   Archivo 700/800 (display, tight -0.03em..-0.05em tracking, like the template's
+   clamp(2.5rem..7rem) scale) + Inter for body. See index.html comment. Not
+   impersonating the proprietary font.
+
+   Motion: ONE technique adopted from the template, honestly — CSS scroll-driven
+   animations (animation-timeline: view()) for section entrances, guarded by
+   @supports (the template gates with CSS.supports('animation-timeline: view()')
+   in its motion-gate script; here the same check is done in pure CSS) and disabled
+   under prefers-reduced-motion. No libraries; package.json untouched. */
 
 @theme {
-  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
-  --font-body: "Nunito", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Archivo", "Arial", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-cream: #efeeec;
-  --color-navy: #001433;
-  --color-orange: #ff7714;
-  --color-sky: #3bd3fd;
-  --color-lime: #eef773;
-  --color-coral: #fb4450;
-  --color-green: #035d44;
-  --color-plum: #46022f;
-  --color-card: #ffffff;
-
-  --radius-clay: 1.75rem;
+  --color-paper: #ffffff;
+  --color-ink: #0b0b0b;
+  --color-tangerine: #fe7141;
+  --color-lavender: #cdabfe;
+  --color-sage: #d1ddd3;
+  --color-graphite: #595959;
+  --color-fog: #a8a8a8;
 }
 
 html { scroll-behavior: smooth; color-scheme: light; }
-section[id] { scroll-margin-top: 6rem; }
+section[id] { scroll-margin-top: 4.5rem; }
 a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -37,29 +74,74 @@ a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent
 }
 
 body {
-  background: var(--color-cream);
-  color: var(--color-navy);
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-family: var(--font-body);
+  font-size: 17px; /* template body metrics: 17px / 1.45 / -0.01em */
+  line-height: 1.45;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
-::selection { background: color-mix(in srgb, var(--color-lime) 70%, transparent); }
+::selection { background: var(--color-lavender); color: var(--color-ink); }
 
 :focus-visible {
-  outline: 3px solid var(--color-navy);
+  outline: 3px solid var(--color-ink);
   outline-offset: 3px;
 }
-.on-dark :focus-visible { outline-color: var(--color-lime); }
+.on-dark :focus-visible { outline-color: var(--color-tangerine); }
 
-/* clay cards: fat soft shadow, squish on hover */
-.clay {
-  box-shadow: 0 10px 0 rgba(0, 20, 51, 0.08), 0 24px 48px rgba(0, 20, 51, 0.10);
-  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 240ms ease;
+/* Giant tight display type — the template's scale (m-text-2/3, op-title),
+   clamp(2.5rem..7rem), weights 700-800, negative tracking. */
+@layer components {
+  .display-hero {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(2.6rem, 8.4vw, 7rem); line-height: 0.96; letter-spacing: -0.04em;
+  }
+  .display-section {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(2.1rem, 4.2vw, 3.5rem); line-height: 1; letter-spacing: -0.03em;
+  }
+  .display-card {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(1.25rem, 2vw, 1.7rem); line-height: 1.14; letter-spacing: -0.02em;
+  }
+  .display-number {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(2rem, 3.4vw, 2.75rem); line-height: 0.9; letter-spacing: -0.05em;
+  }
+  .eyebrow {
+    font-family: var(--font-body); font-weight: 700;
+    font-size: 12px; line-height: 1.2; letter-spacing: 0.07em; text-transform: uppercase;
+  }
+
+  /* Buttons follow the template's actual border-radius choices: everything is
+     SQUARE (its CSS declares border: 0 and no radius anywhere). CTA = tangerine
+     with INK text (7.17 measured); hover inverts through measured pairs only. */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    min-height: 48px; padding: 10px 24px; border: 0; border-radius: 0;
+    font-family: var(--font-display); font-weight: 700; font-size: 16px;
+    letter-spacing: -0.02em; line-height: 1.1; text-decoration: none; cursor: pointer;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+  .btn-cta { background: var(--color-tangerine); color: var(--color-ink); }        /* 7.17 */
+  .btn-cta:hover { background: var(--color-ink); color: var(--color-paper); }      /* 19.68 */
+  .btn-ink { background: var(--color-ink); color: var(--color-paper); }            /* 19.68 */
+  .btn-ink:hover { background: var(--color-tangerine); color: var(--color-ink); }  /* 7.17 */
+  .btn-outline { background: transparent; color: var(--color-ink); border: 2px solid var(--color-ink); }
+  .btn-outline:hover { background: var(--color-ink); color: var(--color-paper); }
+  .btn-ghost-dark { background: transparent; color: var(--color-paper); border: 2px solid var(--color-fog); } /* fog border, decorative */
+  .btn-ghost-dark:hover { background: var(--color-paper); color: var(--color-ink); }
+
+  /* Template's <mark> highlight: flat block behind words, ink text. */
+  .mark-lavender { background: var(--color-lavender); color: var(--color-ink); padding: 0 0.08em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .mark-tangerine { background: var(--color-tangerine); color: var(--color-ink); padding: 0 0.08em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 }
-.clay:hover { transform: translateY(-4px) scale(1.012); }
-.clay:active { transform: translateY(1px) scale(0.99); }
 
-/* marquee (CSS only, pauses on hover/focus, stops under reduced motion) */
+/* marquee (CSS only, pauses on hover/focus, stops under reduced motion)
+   — v3: ink-block band, paper text, tangerine separators. */
 @keyframes marquee { to { transform: translateX(-50%); } }
 .marquee-track { animation: marquee 26s linear infinite; }
 .marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
@@ -67,7 +149,8 @@ body {
    so on devices with no hover the marquee simply does not move. */
 @media (hover: none) { .marquee-track { animation: none; } }
 
-/* the tumbler mascot wobbles like a roly-poly toy */
+/* the tumbler mascot wobbles like a roly-poly toy (kept — owner's favorite;
+   SVG fills swapped to the flat palette in App.tsx) */
 @keyframes wobble {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-9deg); }
@@ -77,6 +160,20 @@ body {
 .tumbler { transform-origin: 50% 92%; }
 .tumbler:hover, .tumbler:focus-visible, .tumbler.wobbling { animation: wobble 900ms cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-.blob-float { animation: blob 9s ease-in-out infinite alternate; }
-@keyframes blob { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-14px) rotate(3deg); } }
-@media (prefers-reduced-motion: reduce) { .blob-float { animation: none; } }
+/* ONE adopted motion technique — CSS scroll-driven section entrances, exactly the
+   template's tool (animation-timeline: view()) but guarded in pure CSS instead of
+   its JS motion-gate: browsers without support never apply the animation (elements
+   stay visible), and reduced-motion users are excluded by the media query. */
+@keyframes enter-rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .enter {
+      animation: enter-rise 1s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
