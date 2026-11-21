@@ -214,12 +214,18 @@ for (const view of [...DASHBOARD_VIEWS, "does-not-exist"]) {
   html[view] = renderDashboard(store.manifest, store, session, { view, q: view === "people" ? "lvis-" : "" });
   check(`?view=${view} renders`, () => {
     assert.match(html[view], /^<!doctype html>/);
+    assert.ok(html[view].includes("<html lang=\"es\">"), "no language on the document");
+    assert.ok(html[view].includes('name="viewport"'), "no viewport");
+    assert.ok(html[view].includes("family=Fredoka"), "the landing's font is not requested");
+    assert.match(html[view], /class="[^"]*\bclay\b/, "no clay card");
+    assert.ok(html[view].includes("prefers-reduced-motion"), "no reduced-motion block");
+    assert.ok(html[view].includes("focus-visible"), "no focus ring");
     assert.ok(html[view].includes(SCHOOL), "the manifest school name is missing");
     assert.ok(!html[view].includes("undefined"), "the string undefined leaked into the page");
     assert.ok(!html[view].includes("NaN"), "NaN leaked into the page");
     assert.ok(!html[view].includes("[object Object]"), "an object leaked into the page");
+    assert.ok(!html[view].includes("<script"), "there is client JavaScript");
     assert.ok(!/pago recibido|payment received|booking confirmed|confirmation email/i.test(html[view]), "the page promises something the system has not done");
-    assert.ok(html[view].includes('name="q"') || view === "people" || true);
     return `${(html[view].length / 1024).toFixed(1)} KB`;
   });
 }
@@ -294,6 +300,76 @@ check("escaping holds against a hostile manifest", () => {
   assert.ok(page.includes("&lt;script&gt;"), "it was not escaped");
   assert.ok(!page.includes("undefined"), "undefined leaked");
   return "school name and session are escaped";
+});
+
+check("the SCHOOL tab only claims a save when the server says one happened", () => {
+  const plain = renderDashboard(store.manifest, store, session, { view: "school" });
+  const folded = renderDashboard(store.manifest, store, session, { view: "school", folded: "1" });
+  assert.ok(!/se guardó/.test(plain), "the page announced a save nobody asked for");
+  assert.ok(folded.includes("se guardó") && folded.includes("esta misma petición"), "the folded note did not appear");
+  const disk = readFileSync(MANIFEST, "utf8");
+  assert.ok(folded.includes(esc(disk.split("\n").find((l) => l.startsWith("apiVersion")))), "the folded page is not showing the disk text");
+  return "silent without the flag, explicit with it";
+});
+
+check("the store API is what server.mjs calls", () => {
+  // the integrator boots with seedDemo(path); open(path) and renders with
+  // { view: url.searchParams.get("view") ?? "hoy", q: … ?? "" } — including
+  // null, "", "bogus" and a hostile q
+  for (const view of [null, "", "bogus", "people", "school"]) {
+    for (const q of ["", '<script>alert(1)</script>', "LVIS"]) {
+      const page = renderDashboard(store.manifest, store, session, { view, q });
+      assert.ok(!page.includes("undefined") && !page.includes("[object Object]"), `leak in view=${view} q=${q}`);
+      assert.ok(!page.includes("<script>"), "client JS appeared");
+      if (view === "people" && q.startsWith("<"))
+        assert.ok(page.includes("&lt;script&gt;alert(1)&lt;/script&gt;"), "the query was not echoed escaped");
+    }
+  }
+  return "null/empty/bogus views and a hostile q all render";
+});
+
+/* --------------------------- 5. a second school ------------------------- */
+log("\n5 · the topology bends: the same code against schools/aurora.yaml");
+const AURORA = resolve(HERE, "..", "schools", "aurora.yaml");
+check("aurora seeds into its own directory and its own money", () => {
+  const root = join(tmp, "aurora");
+  const out = seedDemo(AURORA, { dataRoot: root, today: FIXED });
+  assert.equal(out.slug, "aurora", `slug came out ${out.slug}`);
+  assert.ok(out.counts.persons >= 14, "families did not travel");
+  const codes = new Set(out.meta.programCodes);
+  for (const e of out.records.enrolments) assert.ok(codes.has(e.programCode), `${e.ref} → ${e.programCode}`);
+  assert.equal(out.counts.proofsUploaded, 0, "aurora has proofs:false, so no slip should exist");
+  assert.match(out.records.payments[0].currency, /CNY/, "money did not follow the manifest");
+  assert.ok(out.meta.deadline.date === "2027-05-15" && out.meta.deadline.source === "manifest", "the manifest's own early-bird deadline was not preferred");
+  return `${out.slug}: ${out.counts.enrolments} matrículas en ${codes.size} programas · 0 resguardos · deadline ${out.meta.deadline.date} (${out.meta.deadline.programName})`;
+});
+
+check("aurora renders every tab with its own words and no leaks", () => {
+  const root = join(tmp, "aurora");
+  const a = open(AURORA, { dataRoot: root, today: FIXED });
+  const bad = [];
+  for (const view of DASHBOARD_VIEWS) {
+    const page = renderDashboard(a.manifest, a, { email: "desk@aurora.example", role: "desk" }, { view });
+    if (page.includes("undefined") || page.includes("NaN") || page.includes("[object Object]")) bad.push(view);
+    if (!page.includes("Aurora Terrace Academy")) bad.push(`${view}:name`);
+    assert.ok(!page.includes("Lotus Valley"), "the other school leaked in");
+  }
+  assert.deepEqual(bad, [], `problems: ${bad.join(", ")}`);
+  const t = a.today();
+  const proofsLine = t.lines.find((l) => l.key === "proofs");
+  assert.equal(proofsLine.value, 0);
+  assert.equal(proofsLine.empty, true, "a school without proofs must say so, not show a queue");
+  assert.match(proofsLine.detail, /features.proofs/, "the empty line does not explain itself");
+  const money = renderDashboard(a.manifest, a, null, { view: "money" });
+  assert.ok(money.includes("precio no publicado") || money.includes("¥"), "aurora's unpublished price is not handled");
+  const pipe = renderDashboard(a.manifest, a, null, { view: "pipeline" });
+  assert.ok(pipe.includes("operations.features.proofs: false"), "PIPELINE does not say the feature is off");
+  const inside = a.pipeline().groups.flatMap((g) => g.items).filter((r) => r.ageInsideRange === true);
+  const outside = a.pipeline().groups.flatMap((g) => g.items).filter((r) => r.ageInsideRange === false);
+  assert.ok(inside.length > 0, "the seeder never matched aurora's age ranges at all");
+  for (const r of outside) assert.ok(Number.isFinite(r.childAge) && r.programAges, "an out-of-range row has no age to show");
+  if (outside.length) assert.ok(pipe.includes("fuera del rango"), "a tear is on the records but not on the screen");
+  return `${inside.length} matrículas dentro del rango del manifiesto · ${outside.length} fuera (chip rojo: ${outside.length ? "visible" : "no hacen falta"})`;
 });
 
 /* --------------------------------- CLI ---------------------------------- */

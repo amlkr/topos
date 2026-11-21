@@ -308,14 +308,14 @@ function buildSeed(manifest, slug, reference) {
   };
 
   const pickChild = (person, program, wantedName) => {
-    const byName = person.children.find((c) => c.name === wantedName);
-    if (byName) return byName;
     const range = ageRange(program.ages);
-    if (range) {
-      const fit = person.children.find((c) => c.age >= range.min && c.age <= range.max);
-      if (fit) return fit;
-    }
-    return person.children[0];
+    const byName = person.children.find((c) => c.name === wantedName);
+    // the plan names a child, but a school's declared age range outranks the
+    // plan: with another child of the family inside the range, that one enrols
+    const fits = (c) => c && (!range || (c.age >= range.min && c.age <= range.max));
+    if (fits(byName)) return byName;
+    const firstFit = range ? person.children.find(fits) : null;
+    return firstFit ?? byName ?? person.children[0];
   };
 
   for (const row of ENROLMENT_PLAN) {
@@ -363,7 +363,7 @@ function buildSeed(manifest, slug, reference) {
     };
     payments.push(payment);
 
-    if (row.proof !== "none") {
+    if (proofsOn && row.proof !== "none") {
       const uploaded = addDays(paidAt ?? due ?? requested, -int(rng, 0, 3));
       const proof = {
         id: `prf-${String(proofs.length + 1).padStart(4, "0")}`,
@@ -484,6 +484,7 @@ export function seedDemo(manifestOrPath, opts = {}) {
     generatedFrom: "dashboard/data.mjs seedDemo()",
     prngSeed: PRNG_SEED,
     programCodes: (manifest.programs ?? []).map((p) => p.code),
+    features: manifest.operations?.features ?? null,
     deadline: seed.deadline,
     currency: seed.currency,
     counts,
@@ -580,6 +581,8 @@ export function open(manifestOrPath, opts = {}) {
       const r = this.records();
       const meta = readMeta();
       const date = todayISO();
+      const features = meta?.features ?? manifest.operations?.features ?? {};
+      const featuresOn = { proofs: features.proofs !== false, marketing: features.marketingEngine !== false, portal: features.parentPortal !== false };
       const open = r.threads.filter((t) => t.status === "open");
       const pending = r.proofs.filter((p) => p.verified === null);
       const unpaid = r.payments.filter((p) => !p.paid);
@@ -604,12 +607,16 @@ export function open(manifestOrPath, opts = {}) {
         {
           key: "proofs",
           label: "Resguardos por verificar",
-          value: pending.length,
+          value: featuresOn.proofs ? pending.length : 0,
           unit: pending.length === 1 ? "justificante" : "justificantes",
-          detail: pending.length ? `${pending.map((p) => p.ref).join(", ")} — subidos y a la espera de una persona` : "ningún resguardo subido esperando revisión",
-          empty: pending.length === 0,
-          href: "?view=pipeline#resguardos",
-          tone: "lime",
+          detail: !featuresOn.proofs
+            ? "esta escuela no recibe resguardos: el manifiesto apaga operations.features.proofs"
+            : pending.length
+              ? `${pending.map((p) => p.ref).join(", ")} — subidos y a la espera de una persona`
+              : "ningún resguardo subido esperando revisión",
+          empty: !featuresOn.proofs || pending.length === 0,
+          href: !featuresOn.proofs ? "?view=school" : "?view=pipeline#resguardos",
+          tone: !featuresOn.proofs ? "grey" : "lime",
         },
         {
           key: "unpaid",
@@ -682,6 +689,7 @@ export function open(manifestOrPath, opts = {}) {
 
       const rows = r.enrolments.map((e) => {
         const program = programMap.get(e.programCode) ?? null;
+        const range = ageRange(program?.ages);
         const payment = payByEnrolment.get(e.id) ?? null;
         const proof = payment?.proofId ? proofById.get(payment.proofId) ?? null : null;
         const person = byPerson.get(e.personId) ?? null;
@@ -698,6 +706,9 @@ export function open(manifestOrPath, opts = {}) {
           programCode: e.programCode,
           programName: program?.name ?? null,
           programPlace: program?.place ?? null,
+          programAges: program?.ages ?? null,
+          /** null when the manifest declares no parsable range for this program */
+          ageInsideRange: range && Number.isFinite(Number(e.childAge)) ? Number(e.childAge) >= range.min && Number(e.childAge) <= range.max : null,
           /** the figure the manifest publishes right now */
           amount: typeof price.amount === "number" ? price.amount : Number(e.amount || 0),
           amountRecorded: Number(e.amount || 0),
@@ -933,6 +944,7 @@ export function open(manifestOrPath, opts = {}) {
       const items = (r.content ?? []).slice().sort((a, b) => (a.updated < b.updated ? 1 : -1));
       return {
         blogEnabled: Boolean(manifest.content?.blog),
+        marketingEnabled: manifest.operations?.features?.marketingEngine !== false,
         mediaConsent: manifest.content?.mediaConsent ?? null,
         count: items.length,
         byStatus: items.reduce((acc, s) => {
