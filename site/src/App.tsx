@@ -217,7 +217,7 @@ export default function App() {
           <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-5 py-20 text-center sm:py-28">
             <Tumbler />
             <h1 className="max-w-3xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-7xl" style={{ fontFamily: "Fredoka" }}>
-              Your school, <span className="bg-lime px-3 rounded-xl box-decoration-break">its own place</span> in the internet.
+              Your school, <span className="bg-lime px-3 rounded-xl box-decoration-slice">its own place</span> in the internet.
             </h1>
             <p className="max-w-2xl text-lg leading-relaxed text-navy/75">
               Topos is the friendly home for admissions, families, stories and news of an international
