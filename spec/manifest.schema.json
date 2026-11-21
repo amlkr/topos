@@ -114,8 +114,33 @@
             "dashboard": { "type": "boolean" },
             "parentPortal": { "type": "boolean" },
             "proofs": { "type": "boolean" },
-            "marketingEngine": { "type": "boolean" }
+            "marketingEngine": { "type": "boolean" },
+            "crm": { "type": "boolean", "description": "dashboard tab gate: CRM de admisión. Absent = default on (backward compatible)." },
+            "comms": { "type": "boolean", "description": "dashboard tab gate: comunicaciones internas. Absent = default on." },
+            "finance": { "type": "boolean", "description": "dashboard tab gate: finanzas / pagos. Absent = default on." },
+            "marketing": { "type": "boolean", "description": "dashboard tab gate: motor de marketing. Absent = default on." },
+            "learning": { "type": "boolean", "description": "dashboard tab gate: currículo / learning. Absent = default on." },
+            "portal": { "type": "boolean", "description": "dashboard tab gate: portal de familias. Absent = default on." }
           }
+        }
+      }
+    },
+    "admissions": {
+      "type": "object",
+      "required": ["funnel"],
+      "properties": {
+        "funnel": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 7,
+          "uniqueItems": true,
+          "items": { "type": "string" },
+          "description": "the admissions states, first contact to honest terminal. Names must be unique, non-empty, lowercase; the LAST state must be a payment/enrolment truth (matriculado|enrolled|pagado|paid family) and no state may be 'demo' or 'test'. maxItems/uniqueItems and the terminal rule are enforced by contractProblems() — the engine validator is a draft-07 subset."
+        },
+        "forms": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "enrolment form keys this school asks families for. Optional; declaration only in v0."
         }
       }
     }

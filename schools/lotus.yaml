@@ -32,6 +32,12 @@ topology:
   groupsBy: term
   agesRange: "4-17"
 
+# El funnel de admisiones es DATOS, no código: la pantalla lo pinta, el
+# contrato exige que termine en verdad de matrícula/pago (docs/manifest-spec.md §12).
+admissions:
+  funnel: [consulta, visita, matriculado]
+  forms: [solicitud, ficha-medica]
+
 programs:
   - code: LVIS-ROBOTICS-TERM
     name: Robotics & Making
@@ -71,3 +77,9 @@ operations:
     parentPortal: true
     proofs: true
     marketingEngine: true
+    # gates de pestañas del panel (operations.features.*, absent = default on):
+    crm: true
+    comms: true
+    finance: true
+    marketing: false
+    learning: false

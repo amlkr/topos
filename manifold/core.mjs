@@ -45,6 +45,12 @@ export function validateManifest(value, schema, path = "$", errors = []) {
 }
 
 /* ---------------- extra contract beyond the schema ----------------------- */
+
+/* The honest terminal: the funnel must end where money or a place is truly
+ * settled — never on a soft "lost"/"perdido" state pretending to be an end. */
+const TERMINAL_FAMILY = /matricul|enrol|pagad|paid/i;
+const JUNK_STATE = /^(demo|test)$/;
+
 export function contractProblems(manifest) {
   const problems = [];
   const seen = new Set();
@@ -57,6 +63,28 @@ export function contractProblems(manifest) {
   for (const f of manifest.communication?.funnels ?? [])
     if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(f.address))
       problems.push(`funnel ${f.key}: address is not an address (it must be a real, proven mailbox)`);
+  const admissions = manifest.admissions?.funnel;
+  if (admissions !== undefined) {
+    if (!Array.isArray(admissions)) problems.push("admissions.funnel: must be an array of state names");
+    else {
+      const states = admissions.map((s) => String(s ?? ""));
+      if (states.length < 3 || states.length > 7)
+        problems.push(`admissions.funnel: needs 3 to 7 states, got ${states.length}`);
+      const seenStates = new Set();
+      for (const s of states) {
+        if (!s.trim()) problems.push("admissions.funnel: a state name must not be empty");
+        else if (s !== s.toLowerCase() || s !== s.trim() || /\s/.test(s))
+          problems.push(`admissions.funnel: state "${s}" must be one lowercase word (no spaces, no caps)`);
+        else if (JUNK_STATE.test(s))
+          problems.push(`admissions.funnel: state "${s}" is a placeholder, not an admissions truth`);
+        if (seenStates.has(s)) problems.push(`admissions.funnel: duplicate state "${s}"`);
+        seenStates.add(s);
+      }
+      const last = states[states.length - 1];
+      if (states.length && !TERMINAL_FAMILY.test(last))
+        problems.push(`admissions.funnel: last state "${last}" is not an honest terminal (it must be a payment/enrolment truth: matriculado, enrolled, pagado or paid)`);
+    }
+  }
   return problems;
 }
 

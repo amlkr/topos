@@ -6,8 +6,9 @@ schema disagree, the schema wins — this file explains, it does not define.
 
 A manifest is one YAML document describing one school. **All nine top-level fields are
 required**: `apiVersion`, `kind`, `identity`, `brand`, `topology`, `programs`,
-`communication`, `content`, `operations`. There is no optional section: a school either
-states all of itself or it is invalid. Every field below is transcribed from the schema;
+`communication`, `content`, `operations`. Since v0.3 there is exactly **one optional**
+top-level section, `admissions` (§12); everything else a school must state itself —
+or it is invalid. Every field below is transcribed from the schema;
 nothing here adds a field the schema does not have.
 
 Two notes on the shape of the v0 schema before the sections:
@@ -131,6 +132,7 @@ How the school runs.
 | `operations.features.parentPortal` | ✅ | boolean | Parent-facing area on/off. |
 | `operations.features.proofs` | ✅ | boolean | Payment-proof handling on/off. |
 | `operations.features.marketingEngine` | ✅ | boolean | Outbound engine on/off. |
+| `operations.features.crm` / `.comms` / `.finance` / `.marketing` / `.learning` / `.portal` | ⬜ | boolean | Dashboard tab gates (v0.3). Absent = on (`!== false`, same discipline as `proofs`); `false` hides the tab. See §12. |
 
 ### The five primitives, and why they are `const`
 
@@ -162,7 +164,7 @@ payments is not — that would not be a different school, it would be a hole.
 
 ## 8. Contract rules beyond the schema
 
-JSON Schema says a document is well-shaped. Three further rules come from the engine
+JSON Schema says a document is well-shaped. Four further rules come from the engine
 (`contractProblems()` in `manifold/core.mjs`) and say a document is *honest*. A manifest
 that passes the schema but fails these is refused.
 
@@ -179,6 +181,13 @@ that passes the schema but fails these is refused.
    operator's duty** — a published address must have been written to and answered in
    its inbox before launch. The schema and the example below use `.example` domains
    precisely to mark "not proven, do not believe."
+4. **An admissions funnel must end in a truth.** If `admissions.funnel` is present:
+   3–7 states, unique, non-empty, single lowercase words; no state may be `demo` or
+   `test`; and the **last** state must belong to the payment/enrolment family
+   (`matriculado|enrolled|pagado|paid` — containment, so `matriculados` passes).
+   A funnel that ends in `perdido` is a story about losing, not about enrolling.
+   Enforced by `contractProblems()`; the engine's draft-07 subset does not check
+   uniqueness or the bound itself (see §12).
 
 ---
 
@@ -230,7 +239,8 @@ not the loophole: unknown keys validate silently, and render nothing, forever.
 
 ## 11. A minimal valid example
 
-The smallest manifest that passes both the schema and all three contract rules — one
+The smallest manifest that passes the schema and every contract rule (§8, four of
+them — this example has no `admissions` section, which since v0.3 is legal) — one
 program, one funnel, every required field present. Trimmed from `schools/lotus.yaml`.
 
 ```yaml
@@ -290,12 +300,78 @@ operations:
     marketingEngine: false
 ```
 
-`river.example` passes the address-shape rule but is not a proven mailbox — `.example`
-is the flag that says exactly that. Before a real school ships, §8 rule 3 is completed
-by a human, not by the validator.
+---
 
-Check your own manifest with the engine:
+## 12. Admisiones: el funnel es datos (v0.3)
+
+Hasta ahora el embudo de admisiones vivía en el código del panel. Ya no:
+`admissions` es una sección **opcional** del manifiesto y el CRM la pinta.
+Opcional de verdad — **ausente = vocabulario por defecto del módulo**, así que
+los manifiestos anteriores siguen validando y sirviendo igual.
+
+| Campo | Obligatorio | Tipo | Significado |
+|---|---|---|---|
+| `admissions.funnel` | ✅ (si `admissions` existe) | array de 3–7 cadenas | Los estados, del primer contacto a la última puerta. Nombres únicos, sin espacios, en minúsculas. |
+| `admissions.forms` | ⬜ | array de cadenas | Claves de formularios que la escuela pide a las familias. En v0 es declaración; ninguna pantalla los genera todavía (regla de Thom: lo que el motor no hace, no se finge). |
+
+**La última puerta tiene que ser una verdad.** El contrato (`contractProblems()`)
+exige que el último estado sea familia de `matriculado|enrolled|pagado|paid`: un
+embudo no puede "terminar" en un `perdido`; perder no es matricular. Y ningún
+estado puede llamarse `demo` ni `test`: un placeholder en el vocabulario de
+verdad de una escuela es una grieta, no un nombre.
+
+Ejemplo de `lotus.yaml` (camp, tres estados):
+
+```yaml
+admissions:
+  funnel: [consulta, visita, matriculado]
+  forms: [solicitud, ficha-medica]
+```
+
+`aurora.yaml` dobla el mismo hueso sin romperlo: `[enquiry, documents, interview,
+enrolled]` — cuatro estados, otro idioma, misma honestidad terminal. El CRM lee
+esa lista para sus chips, sus filtros y sus selects; un lead almacenado con un
+estado que ya no está en el funnel **no se oculta**: se pinta como «estado fuera
+del funnel: X». Datos viejos, dicho viejo.
+
+### Compuertas de pestañas: `operations.features` crece
+
+A los cuatro interruptores de v0 (`dashboard`, `parentPortal`, `proofs`,
+`marketingEngine`) se suman seis compuertas para las pestañas del panel:
+`crm`, `comms`, `finance`, `marketing`, `learning`, `portal`. Booleans, todos
+opcionales: **ausente = encendida** (mismo patrón `!== false` que ya usa el
+núcleo con `proofs`). Los cuatro de v0 siguen obligatorios: son la plataforma;
+los seis nuevos son el escritorio. El filtrado de pestañas por `features` lo
+aplica el integrador en `server.mjs` (zona del integrador, no de este documento).
+
+```yaml
+operations:
+  primitives: [persons, enrolments, payments, communication, content]
+  features:
+    dashboard: true
+    parentPortal: true
+    proofs: true
+    marketingEngine: true
+    crm: true
+    comms: true
+    finance: true
+    marketing: false
+    learning: false
+```
+
+Las reglas de la forma del funnel (3–7, únicas, minúsculas, terminal honesto,
+sin `demo`/`test`) viven en `contractProblems()`, no en el validador: el
+subconjunto draft-07 del motor no implementa `uniqueItems` ni `maxItems`; las
+palabras del schema son decoración para lectores humanos, la vara real es el
+contrato (§8, regla 4).
+
+---
+
+`river.example` (arriba, §11) sigue siendo el ejemplo mínimo sin `admissions`:
+la sección es opcional y no rompe ningún manifiesto anterior. Comprueba el tuyo
+con el motor:
 
 ```
 node manifold/cli.mjs validate schools/your-school.yaml
 ```
+

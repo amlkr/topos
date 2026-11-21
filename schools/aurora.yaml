@@ -37,6 +37,12 @@ topology:
   groupsBy: level
   agesRange: "5-18"
 
+# Escuela, no camp: el funnel es suyo — cuatro estados, y el último sigue
+# siendo una verdad de matrícula (docs/manifest-spec.md §12).
+admissions:
+  funnel: [enquiry, documents, interview, enrolled]
+  forms: [application]
+
 programs:
   - code: AUR-CN-L1
     name: Mandarin Foundations
@@ -97,3 +103,11 @@ operations:
     parentPortal: true
     proofs: false
     marketingEngine: true
+    # gates de pestañas: academia con currículo — finanzas apagado porque
+    # proofs ya está apagado (coherencia), learning encendido.
+    crm: true
+    comms: true
+    finance: false
+    marketing: false
+    learning: true
+    portal: true

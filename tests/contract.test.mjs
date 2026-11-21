@@ -166,3 +166,85 @@ test("(e✓) v0.2.1: the heading pluralizes once (was a characterization defect)
   assert.match(renderSite(lotus)["/"], /<h2>Our activities<\/h2>/);
   assert.ok(!auroraPages["/"].includes("coursess") && !renderSite(lotus)["/"].includes("activitiess"));
 });
+
+/* --------------------- (f) admissions funnel + feature gates ----------------
+ * v0.3: the funnel became data (`admissions.funnel`) and `operations.features`
+ * grew the dashboard tab gates (crm/comms/finance/marketing/learning/portal).
+ * Backward compatible: an absent `admissions` section still validates clean. */
+
+test("(f) both shipped schools now carry an honest terminal funnel", () => {
+  assert.deepEqual(lotus.admissions.funnel, ["consulta", "visita", "matriculado"]);
+  assert.deepEqual(aurora.admissions.funnel, ["enquiry", "documents", "interview", "enrolled"]);
+  for (const m of [lotus, aurora]) {
+    const last = m.admissions.funnel[m.admissions.funnel.length - 1];
+    assert.match(last, /matricul|enrol|pagad|paid/i, `${m.identity.name}: terminal must be an enrolment truth`);
+  }
+});
+
+test("(f) absent admissions is still a valid manifest (backward compatible)", () => {
+  const m = base();
+  delete m.admissions;
+  assert.deepEqual(problems(m), []);
+});
+
+test("(f) admissions without forms validates clean (forms is optional)", () => {
+  const m = base();
+  m.admissions = { funnel: ["consulta", "visita", "matriculado"] };
+  assert.deepEqual(problems(m), []);
+});
+
+test("(f) rejects a two-state funnel (below minItems 3)", () => {
+  const m = base();
+  m.admissions = { funnel: ["consulta", "matriculado"] };
+  assertFails(m, "admissions.funnel: needs at least 3 items");
+});
+
+test("(f) rejects duplicate funnel states", () => {
+  const m = base();
+  m.admissions = { funnel: ["consulta", "consulta", "matriculado"] };
+  assertFails(m, 'admissions.funnel: duplicate state "consulta"');
+});
+
+test("(f) rejects an empty funnel state", () => {
+  const m = base();
+  m.admissions = { funnel: ["", "visita", "matriculado"] };
+  assertFails(m, "admissions.funnel: a state name must not be empty");
+});
+
+test("(f) rejects a non-lowercase / spaced funnel state", () => {
+  const m = base();
+  m.admissions = { funnel: ["Visita", "documentos", "matriculado"] };
+  assertFails(m, 'admissions.funnel: state "Visita" must be one lowercase word');
+});
+
+test("(f) rejects demo/test as funnel states — no placeholders in the truth", () => {
+  for (const junk of ["demo", "test"]) {
+    const m = base();
+    m.admissions = { funnel: [junk, "visita", "matriculado"] };
+    assertFails(m, `admissions.funnel: state "${junk}" is a placeholder`);
+  }
+});
+
+test("(f) rejects a dishonest terminal: the funnel may not end on 'perdido'", () => {
+  const m = base();
+  m.admissions = { funnel: ["consulta", "visita", "perdido"] };
+  assertFails(m, 'last state "perdido" is not an honest terminal');
+});
+
+test("(f) accepts every honest terminal family (matriculado|enrolled|pagado|paid)", () => {
+  for (const last of ["matriculado", "enrolled", "pagado", "paid"]) {
+    const m = base();
+    m.admissions = { funnel: ["consulta", "documentos", last] };
+    const errs = problems(m).filter((e) => e.includes("honest terminal"));
+    assert.deepEqual(errs, [], `terminal "${last}" must be accepted`);
+  }
+});
+
+test("(f) new feature gates validate; wrong types are refused", () => {
+  const m = base();
+  m.operations.features = { ...m.operations.features, crm: true, comms: true, finance: true, marketing: false, learning: false };
+  assert.deepEqual(problems(m), []);
+  const bad = base();
+  bad.operations.features.crm = "yes";
+  assertFails(bad, "operations.features.crm: must be a boolean");
+});

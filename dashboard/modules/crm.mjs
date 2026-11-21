@@ -5,6 +5,11 @@
  * matrículas. Lo matriculado vive en el pipeline del núcleo; este tab solo
  * mueve leads entre estados y guarda notas internas de seguimiento.
  *
+ * Vocabulario de estados: el funnel del manifiesto (`admissions.funnel`)
+ * manda cuando existe; sin manifiesto, los estados por defecto de siempre.
+ * Un lead con un estado que no está en el funnel del manifiesto NO se
+ * oculta: se pinta como «estado fuera del funnel: X» (regla de honestidad).
+ *
  * Propiedad: un solo archivo, importando únicamente ../module-kit.mjs.
  * Almacén: jsonStore(slug, "crm") → dashboard/.data/<slug>/crm.json.
  * Datos de demo: familias ficticias de Lotus Valley (docs/BOUNDARIES.md).
@@ -12,12 +17,33 @@
  */
 import { jsonStore, esc, head, endHead, card, empty, field, select, submit, id, todayISO } from "../module-kit.mjs";
 
-export const meta = { key: "crm", label: "CRM", order: 10, roles: ["director", "admissions"] };
+export const meta = { key: "crm", label: "CRM", order: 10, roles: ["director", "admissions"], feature: "crm" };
 
 const DEFAULTS = { leads: [], followups: [] };
-const STATUSES = ["nuevo", "contactado", "visita", "matriculado", "perdido"];
+const DEFAULT_STATUSES = ["nuevo", "contactado", "visita", "matriculado", "perdido"];
 const STATUS_TONE = { nuevo: "sky", contactado: "orange", visita: "lime", matriculado: "green", perdido: "none" };
+const CYCLE_TONES = ["sky", "orange", "lime", "plum", "navy"];
 const SOURCES = ["web", "referido", "llamada", "visita", "otro"];
+
+/* ---------- el funnel: datos del manifiesto, con fallback seguro ---------- */
+
+/** Estados del tab: admissions.funnel del manifiesto si lo hay; si no, los de siempre. */
+function funnelOf(ctx) {
+  const f = ctx?.manifest?.admissions?.funnel;
+  return Array.isArray(f) && f.length ? f.map((s) => String(s)) : DEFAULT_STATUSES;
+}
+
+/** ¿El vocabulario viene del manifiesto? (determina la marca «fuera del funnel».) */
+const usesManifestFunnel = (ctx) => {
+  const f = ctx?.manifest?.admissions?.funnel;
+  return Array.isArray(f) && f.length > 0;
+};
+
+function toneFor(status, i, list) {
+  if (STATUS_TONE[status]) return STATUS_TONE[status];
+  if (list.length && i === list.length - 1) return "green"; // el terminal honesto, en verde
+  return CYCLE_TONES[((i % CYCLE_TONES.length) + CYCLE_TONES.length) % CYCLE_TONES.length] ?? "navy";
+}
 
 /* ---------- pequeños helpers locales (el kit no los trae) ---------- */
 
@@ -44,15 +70,46 @@ function daysSince(iso) {
   return Math.max(0, Math.round((b - a) / 86400000));
 }
 
-const cleanFilter = (v) => (STATUSES.includes(v) ? v : "");
+const cleanFilter = (statuses, v) => (statuses.includes(v) ? v : "");
 
-/* ---------- semilla de demo: cinco leads ficticios de Lotus Valley ---------- */
+/* ---------- semilla de demo ---------- */
 
-function seedLeads(data) {
-  const mk = (family, contact, source, status, createdDaysAgo, touchedDaysAgo, note) => ({
-    id: id(), family, contact, source, status, note,
-    day: dayOffsetISO(createdDaysAgo), updatedAt: dayOffsetISO(touchedDaysAgo),
+const mk = (family, contact, source, status, createdDaysAgo, touchedDaysAgo, note) => ({
+  id: id(), family, contact, source, status, note,
+  day: dayOffsetISO(createdDaysAgo), updatedAt: dayOffsetISO(touchedDaysAgo),
+});
+
+/** Pool ficticio de Lotus Valley; se recicla para funnels de hasta 7 estados. */
+const DEMO_FAMILIES = [
+  ["Whitmore–Chaiyapruek", "+66 81 555 0148", "referido"],
+  ["Familia Sirikul–Tan", "sirikul.tan@lvis.example", "web"],
+  ["Familia Vandermeer", "vandermeer.kids@lvis.example", "visita"],
+  ["Familia Wongchali", "wongchali.fam@lvis.example", "llamada"],
+  ["Anantachai–Wilson", "+66 81 555 0113", "otro"],
+  ["Familia Petchsawat", "petchsawat.fam@lvis.example", "web"],
+  ["Familia Okonkwo–Lee", "okonkwo.lee@lvis.example", "referido"],
+];
+
+/** Semilla cuando el manifiesto trae funnel: un lead ficticio por estado. */
+function seedFromFunnel(data, statuses) {
+  data.leads = statuses.map((s, i) => {
+    const [family, contact, source] = DEMO_FAMILIES[i % DEMO_FAMILIES.length];
+    const last = i === statuses.length - 1;
+    return mk(family, contact, source, s, 3 + i * 5, last ? 0 : 6 + i * 10,
+      last
+        ? `demo: familia ficticia; llegó a «${s}» — el expediente de matrícula vive en el pipeline, no en este tab`
+        : `demo: familia ficticia sembrada en «${s}» según el funnel del manifiesto`);
   });
+  const fu = (i, text, daysAgo) => ({ id: id(), leadId: data.leads[i].id, text, day: dayOffsetISO(daysAgo) });
+  data.followups = [
+    fu(Math.min(1, data.leads.length - 1), "demo: primera respuesta enviada; la familia pregunta por fechas y horarios.", 1),
+    fu(data.leads.length - 1, "demo: la llamada confirmó la plaza; el alta se cerró fuera de este tab.", 2),
+  ];
+  return data;
+}
+
+/** Semilla clásica: cinco leads ficticios de Lotus Valley con los estados por defecto. */
+function seedDefault(data) {
   const leads = [
     mk("Whitmore–Chaiyapruek", "+66 81 555 0148", "referido", "nuevo", 2, 2,
       "demo: familia ficticia; recomendada por una familia ya matriculada, aún no llamada"),
@@ -77,12 +134,14 @@ function seedLeads(data) {
   return data;
 }
 
-/** Lee el almacén; si está vacío (primera carga), siembra la demo. */
-function loadSeeded(db) {
+/** Lee el almacén; si está vacío (primera carga), siembra la demo que corresponda. */
+function loadSeeded(db, ctx) {
   const data = db.load();
   if (!Array.isArray(data.leads)) data.leads = [];
   if (!Array.isArray(data.followups)) data.followups = [];
-  if (data.leads.length === 0 && data.followups.length === 0) db.save(seedLeads(data));
+  if (data.leads.length === 0 && data.followups.length === 0) {
+    db.save(usesManifestFunnel(ctx) ? seedFromFunnel(data, funnelOf(ctx)) : seedDefault(data));
+  }
   return data;
 }
 
@@ -99,12 +158,14 @@ function lastFollowup(followups, leadId) {
 
 export function render(ctx) {
   const db = jsonStore(ctx.slug, meta.key, DEFAULTS);
-  const data = loadSeeded(db);
+  const data = loadSeeded(db, ctx);
   const qp = ctx.query ?? ctx.params ?? new URLSearchParams();
-  const filter = cleanFilter(String(qp.get("status") ?? ""));
+  const statuses = funnelOf(ctx);
+  const fromManifest = usesManifestFunnel(ctx);
+  const filter = cleanFilter(statuses, String(qp.get("status") ?? ""));
 
   const total = data.leads.length;
-  const counts = Object.fromEntries(STATUSES.map((s) => [s, data.leads.filter((l) => l.status === s).length]));
+  const counts = Object.fromEntries(statuses.map((s) => [s, data.leads.filter((l) => l.status === s).length]));
   const shown = (filter ? data.leads.filter((l) => l.status === filter) : data.leads)
     .slice()
     .sort((a, b) => String(a.updatedAt ?? a.day ?? "").localeCompare(String(b.updatedAt ?? b.day ?? "")));
@@ -114,9 +175,9 @@ export function render(ctx) {
   const activeStyle = `${chipStyle};outline:3px solid var(--navy);outline-offset:2px`;
   const chips = [
     `<a class="chip chip--navy" href="/m/${meta.key}"${filter ? "" : ' aria-current="page"'} style="${filter ? chipStyle : activeStyle}">${esc(plural(total, "lead", "leads"))}</a>`,
-    ...STATUSES.map((s) => {
+    ...statuses.map((s, i) => {
       const active = filter === s;
-      return `<a class="chip chip--${STATUS_TONE[s]}" href="/m/${meta.key}?status=${encodeURIComponent(s)}"${active ? ' aria-current="page"' : ""} style="${active ? activeStyle : chipStyle}">${esc(counts[s])} ${esc(s)}</a>`;
+      return `<a class="chip chip--${toneFor(s, i, statuses)}" href="/m/${meta.key}?status=${encodeURIComponent(s)}"${active ? ' aria-current="page"' : ""} style="${active ? activeStyle : chipStyle}">${esc(counts[s])} ${esc(s)}</a>`;
     }),
   ].join(" ");
 
@@ -124,7 +185,7 @@ export function render(ctx) {
   const filterForm = `<form method="get" action="/m/${meta.key}" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:4px 0 18px">
     <label for="crm-filter">Ver solo el estado</label>
     <select id="crm-filter" name="status">${[`<option value=""${filter ? "" : " selected"}>todos</option>`,
-      ...STATUSES.map((s) => `<option value="${esc(s)}"${s === filter ? " selected" : ""}>${esc(s)}</option>`)].join("")}</select>
+      ...statuses.map((s) => `<option value="${esc(s)}"${s === filter ? " selected" : ""}>${esc(s)}</option>`)].join("")}</select>
     <button class="btn min-h-11" type="submit">Filtrar</button>${filter ? `<a class="btn btn--ghost min-h-11" href="/m/${meta.key}">Quitar filtro</a>` : ""}
   </form>`;
 
@@ -137,11 +198,18 @@ export function render(ctx) {
       : days <= 0 ? chip("tocado hoy", tone)
       : chip(`sin tocar hace ${days} ${days === 1 ? "día" : "días"}`, tone);
     const lf = lastFollowup(data.followups, lid);
-    const statusOptions = STATUSES.map((s) => `<option value="${esc(s)}"${s === l.status ? " selected" : ""}>${esc(s)}</option>`).join("");
+    const outside = fromManifest && !statuses.includes(l.status);
+    const statusOptions = [
+      ...statuses.map((s) => `<option value="${esc(s)}"${s === l.status ? " selected" : ""}>${esc(s)}</option>`),
+      ...(outside ? [`<option value="${esc(l.status)}" selected>${esc(l.status)} (fuera del funnel)</option>`] : []),
+    ].join("");
+    const statusChip = outside
+      ? chip(`estado fuera del funnel: ${l.status}`, "coral")
+      : chip(l.status, STATUS_TONE[l.status] ?? toneFor(l.status, statuses.indexOf(l.status), statuses) ?? "navy");
     return card(`
       <h3 style="margin:0 0 4px">${esc(l.family)}</h3>
       <p style="margin:0 0 8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        ${chip(l.status, STATUS_TONE[l.status] ?? "navy")}
+        ${statusChip}
         ${chip("vino por " + l.source, "none")}
         ${stale}
       </p>
@@ -178,7 +246,7 @@ export function render(ctx) {
       <span style="flex:2;min-width:240px">${field("note", "Nota (opcional)")}</span>
       ${submit("Añadir lead")}
     </form>
-    <p class="note" style="margin:10px 0 0">El lead entra con estado «nuevo». Este formulario no escribe en el pipeline de matrículas ni envía nada a ninguna familia: solo guarda en el almacén local.</p>
+    <p class="note" style="margin:10px 0 0">El lead entra con estado «${esc(statuses[0])}». Este formulario no escribe en el pipeline de matrículas ni envía nada a ninguna familia: solo guarda en el almacén local.</p>
   `);
 
   return `${head({
@@ -186,7 +254,8 @@ export function render(ctx) {
     title: "CRM · contactos de admisión",
     sub: "Familias que han preguntado y aún no están en matrículas. Lo matriculado de verdad se gestiona en el pipeline del núcleo, no aquí.",
   })}
-    <p class="clay callout"><strong>Datos de demo, locales.</strong> Este tab escribe solo en <code>dashboard/.data/${esc(ctx.slug)}/crm.json</code>: no hay envíos, ni avisos a las familias, ni sincronización con otro sistema. Los cinco leads sembrados el día uno son familias ficticias de Lotus Valley y llevan «demo:» en su nota.</p>
+    <p class="clay callout"><strong>Datos de demo, locales.</strong> Este tab escribe solo en <code>dashboard/.data/${esc(ctx.slug)}/crm.json</code>: no hay envíos, ni avisos a las familias, ni sincronización con otro sistema. ${fromManifest ? "Los leads sembrados el día uno siguen el funnel del manifiesto, son familias ficticias de Lotus Valley y llevan «demo:» en su nota." : "Los cinco leads sembrados el día uno son familias ficticias de Lotus Valley y llevan «demo:» en su nota."}</p>
+    ${fromManifest ? `<p class="note" style="margin:10px 0 0">Los estados salen del manifiesto (<code>admissions.funnel</code>): ${esc(statuses.join(" → "))}. Un lead con un estado ausente de esa lista no se oculta: se marca como «fuera del funnel».</p>` : ""}
     <p style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0">${chips}</p>
     ${filterForm}
     ${filter ? `<p class="note" style="margin:0 0 10px">Mostrando solo «${esc(filter)}» — ordenados con el más antiguo sin tocar primero.</p>` : `<p class="note" style="margin:0 0 10px">Ordenados con el más antiguo sin tocar primero, para que lo vencido se vea antes.</p>`}
@@ -204,9 +273,10 @@ export function handle(ctx, form) {
   }
 
   const db = jsonStore(ctx.slug, meta.key, DEFAULTS);
-  const data = loadSeeded(db);
+  const data = loadSeeded(db, ctx);
+  const statuses = funnelOf(ctx);
   const qp = ctx.query ?? ctx.params ?? new URLSearchParams();
-  const filter = cleanFilter(String(form.get("filter") ?? qp.get("status") ?? ""));
+  const filter = cleanFilter(statuses, String(form.get("filter") ?? qp.get("status") ?? ""));
   const target = filter ? `/m/${meta.key}?status=${encodeURIComponent(filter)}` : `/m/${meta.key}`;
   const back = { redirect: target };
   const fail = (msg) => ({
@@ -225,7 +295,7 @@ export function handle(ctx, form) {
     const contact = slice("contact");
     const source = SOURCES.includes(String(form.get("source") ?? "")) ? String(form.get("source")) : "otro";
     const note = slice("note");
-    data.leads.unshift({ id: id(), family, contact, source, status: "nuevo", note, day: today, updatedAt: today });
+    data.leads.unshift({ id: id(), family, contact, source, status: statuses[0], note, day: today, updatedAt: today });
     db.save(data);
     return back;
   }
@@ -236,7 +306,7 @@ export function handle(ctx, form) {
   if (action === "set-status") {
     if (!lead) return fail("Ese lead ya no está en el almacén — recarga la página y prueba de nuevo.");
     const status = String(form.get("status") ?? "");
-    if (!STATUSES.includes(status)) return fail(`«${status || "(vacío)"}» no es un estado que este CRM conozca.`);
+    if (!statuses.includes(status)) return fail(`«${status || "(vacío)"}» no es un estado que este CRM conozca.`);
     if (status !== lead.status) {
       lead.status = status;
       lead.updatedAt = today;
