@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "project": {
+    "name": "topos",
+    "productType": "developer-infrastructure SaaS landing (open-core platform for schools)",
+    "stack": [
+      "vite",
+      "react",
+      "tailwind-v4"
+    ]
+  },
+  "sources": {
+    "tokens": [],
+    "components": [],
+    "assets": [],
+    "instructions": []
+  },
+  "design": {
+    "colorMode": "dark",
+    "colors": {
+      "night": "#0b0a14",
+      "surface": "#131220",
+      "indigo": "#6366f1",
+      "indigoMid": "#4f46e5",
+      "indigoDeep": "#4338ca",
+      "emerald": "#10b981",
+      "amber": "#f4b942",
+      "chalk": "#f4f2fb",
+      "mist": "#a7a3c0"
+    },
+    "typography": {
+      "display": "Plus Jakarta Sans",
+      "mono": "JetBrains Mono"
+    },
+    "spacing": {},
+    "radius": {},
+    "shadows": {},
+    "motion": {},
+    "density": "unknown"
+  },
+  "components": {
+    "installed": [],
+    "preferredPrimitives": [],
+    "patterns": []
+  },
+  "constraints": {
+    "must": [],
+    "avoid": []
+  },
+  "decisions": [
+    {
+      "date": "2026-11-21",
+      "decision": "Landing: dark indigo/emerald system from ui-ux-pro-max --design-system; only 21st component adopted is Terminal Typewriter (id 29812, adapted without shadcn). Three.js hero and framer-motion bento REJECTED on purpose \u2014 product of precision, no spectacle libs. Bento is hand CSS grid.",
+      "surface": "site/"
+    },
+    {
+      "date": "2026-11-21",
+      "decision": "WIG review applied: CTA fill #4f46e5/#4338ca (white \u22656:1), no muted text below 4.5:1, scroll-margin-top under sticky header, color-scheme dark, decorative SVG aria-hidden, clipboard guarded with honest failure state.",
+      "surface": "site/"
+    }
+  ],
+  "evidence": [],
+  "generatedAt": "2026-11-21T08:26:40.107Z"
+}
