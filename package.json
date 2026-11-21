@@ -1,0 +1,14 @@
+{
+  "name": "topos",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Each school, its own place. Manifest-driven school platform.",
+  "scripts": {
+    "validate": "node manifold/cli.mjs validate schools/lotus.yaml",
+    "serve": "node manifold/cli.mjs serve schools/lotus.yaml"
+  },
+  "dependencies": {
+    "yaml": "^2.6.0"
+  }
+}

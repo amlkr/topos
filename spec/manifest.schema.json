@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://topos.school/spec/manifest.schema.json",
+  "title": "Topos School Manifest v0",
+  "type": "object",
+  "required": ["apiVersion", "kind", "identity", "brand", "topology", "programs", "communication", "content", "operations"],
+  "properties": {
+    "apiVersion": { "const": "topos/v0" },
+    "kind": { "const": "School" },
+    "identity": {
+      "type": "object",
+      "required": ["name", "domain", "defaultLocale", "locales"],
+      "properties": {
+        "name": { "type": "string" },
+        "altName": { "type": "string" },
+        "tagline": { "type": "string" },
+        "domain": { "type": "string" },
+        "defaultLocale": { "type": "string" },
+        "locales": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      }
+    },
+    "brand": {
+      "type": "object",
+      "required": ["palette", "fonts"],
+      "properties": {
+        "palette": {
+          "type": "object",
+          "required": ["brand", "brandDeep", "sun", "ink", "paper", "shell"],
+          "properties": {
+            "brand": { "type": "string" }, "brandDeep": { "type": "string" },
+            "sun": { "type": "string" }, "teal": { "type": "string" },
+            "ink": { "type": "string" }, "paper": { "type": "string" }, "shell": { "type": "string" }
+          }
+        },
+        "fonts": {
+          "type": "object",
+          "required": ["display", "body"],
+          "properties": {
+            "display": { "type": "string" }, "body": { "type": "string" }, "hand": { "type": "string" }
+          }
+        }
+      }
+    },
+    "topology": {
+      "type": "object",
+      "required": ["entity", "groupsBy", "agesRange"],
+      "properties": {
+        "entity": { "type": "string", "description": "what this school calls a program: camp, activity, course..." },
+        "groupsBy": { "type": "string", "description": "how programs are grouped: season, term, level..." },
+        "agesRange": { "type": "string" }
+      }
+    },
+    "programs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["code", "name", "place", "ages", "season", "price", "door"],
+        "properties": {
+          "code": { "type": "string" },
+          "name": { "type": "string" },
+          "place": { "type": "string" },
+          "ages": { "type": "string" },
+          "season": { "type": "object", "required": ["starts", "ends"], "properties": { "starts": { "type": "string" }, "ends": { "type": "string" } } },
+          "price": {
+            "type": "object",
+            "required": ["amount", "currency", "unit", "published"],
+            "properties": {
+              "amount": { "type": "number", "minimum": 0 },
+              "currency": { "type": "string" },
+              "unit": { "type": "string" },
+              "published": { "type": "boolean" },
+              "earlyBird": { "type": "boolean" },
+              "deadline": { "type": "string" }
+            }
+          },
+          "door": { "type": "string", "description": "the enrolment route on the school's own site" }
+        }
+      }
+    },
+    "communication": {
+      "type": "object",
+      "required": ["funnels", "phone", "postalAddress"],
+      "properties": {
+        "funnels": {
+          "type": "array", "minItems": 1,
+          "items": { "type": "object", "required": ["key", "address", "purpose"], "properties": { "key": { "type": "string" }, "address": { "type": "string" }, "purpose": { "type": "string" } } }
+        },
+        "phone": { "type": "string" },
+        "postalAddress": { "type": "string" }
+      }
+    },
+    "content": {
+      "type": "object",
+      "required": ["blog", "mediaConsent"],
+      "properties": {
+        "blog": { "type": "boolean" },
+        "mediaConsent": { "type": "string", "enum": ["pdpa", "gdpr", "none-required"] }
+      }
+    },
+    "operations": {
+      "type": "object",
+      "required": ["primitives", "features"],
+      "properties": {
+        "primitives": {
+          "type": "array",
+          "const": ["persons", "enrolments", "payments", "communication", "content"],
+          "description": "the invariants. A school may rename everything else; these five are the substance."
+        },
+        "features": {
+          "type": "object",
+          "required": ["dashboard", "parentPortal", "proofs", "marketingEngine"],
+          "properties": {
+            "dashboard": { "type": "boolean" },
+            "parentPortal": { "type": "boolean" },
+            "proofs": { "type": "boolean" },
+            "marketingEngine": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

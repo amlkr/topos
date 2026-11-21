@@ -1,0 +1,73 @@
+# Topos founding example — a FICTIONAL school.
+# Lotus Valley International School does not exist; that is the point.
+# The lab (Esara) taught the topology; the product ships with no lab data.
+# Note how this bends the spec on purpose: entity=activity (not camp),
+# groupsBy=term (not season), three locales, a different currency shape.
+apiVersion: topos/v0
+kind: School
+
+identity:
+  name: Lotus Valley International School
+  altName: LVIS
+  tagline: Rooted locally, growing globally
+  domain: lvis.example
+  defaultLocale: en
+  locales: [en, th, zh]
+
+brand:
+  palette:
+    brand: "#0f6e5c"
+    brandDeep: "#083d33"
+    sun: "#e8a33d"
+    teal: "#3aa988"
+    ink: "#1c2321"
+    paper: "#f6f8f7"
+    shell: "#ffffff"
+  fonts:
+    display: Fraunces
+    body: system
+
+topology:
+  entity: activity
+  groupsBy: term
+  agesRange: "4-17"
+
+programs:
+  - code: LVIS-ROBOTICS-TERM
+    name: Robotics & Making
+    place: Valley Campus, floors 2-3
+    ages: "10-17"
+    season: { starts: "2027-05-03", ends: "2027-07-18" }
+    price: { amount: 9500, currency: THB, unit: term, published: true }
+    door: /enrol/robotics
+
+  - code: LVIS-MUSIC-TERM
+    name: Thai & Western Ensemble
+    place: Riverside arts hall
+    ages: "4-11"
+    season: { starts: "2027-05-03", ends: "2027-07-18" }
+    price: { amount: 6800, currency: THB, unit: term, published: true }
+    door: /enrol/music
+
+communication:
+  funnels:
+    - key: admissions
+      address: admissions@lvis.example
+      purpose: Places and enrolment
+    - key: general
+      address: hello@lvis.example
+      purpose: Everything else
+  phone: "+6600000000"
+  postalAddress: "1 Valley Road, Example District, Chiang Mai 00000, Thailand"
+
+content:
+  blog: true
+  mediaConsent: pdpa
+
+operations:
+  primitives: [persons, enrolments, payments, communication, content]
+  features:
+    dashboard: true
+    parentPortal: true
+    proofs: true
+    marketingEngine: true
