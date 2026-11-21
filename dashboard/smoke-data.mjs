@@ -216,7 +216,7 @@ for (const view of [...DASHBOARD_VIEWS, "does-not-exist"]) {
     assert.match(html[view], /^<!doctype html>/);
     assert.ok(html[view].includes("<html lang=\"es\">"), "no language on the document");
     assert.ok(html[view].includes('name="viewport"'), "no viewport");
-    assert.ok(html[view].includes("family=Fredoka"), "the landing's font is not requested");
+    assert.ok(html[view].includes("family=Archivo"), "the design system's font (Archivo, Tallyhouse reskin 2026-11-21) is not requested");
     assert.match(html[view], /class="[^"]*\bclay\b/, "no clay card");
     assert.ok(html[view].includes("prefers-reduced-motion"), "no reduced-motion block");
     assert.ok(html[view].includes("focus-visible"), "no focus ring");
