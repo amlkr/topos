@@ -153,7 +153,7 @@ function FoldGame() {
 function Section({ id, kicker, title, children, className = "" }: { id: string; kicker: string; title: string; children: ReactNode; className?: string }) {
   return (
     <section id={id} className={`mx-auto w-full max-w-6xl px-5 py-16 sm:py-24 ${className}`}>
-      <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.2em] text-orange">{kicker}</p>
+      <p className="mb-2 text-sm font-extrabold uppercase tracking-[0.2em] text-green">{kicker}</p>
       <h2 className="mb-8 max-w-2xl text-3xl font-bold leading-tight sm:text-4xl" style={{ fontFamily: "Fredoka" }}>{title}</h2>
       {children}
     </section>
@@ -217,7 +217,7 @@ export default function App() {
           <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-5 py-20 text-center sm:py-28">
             <Tumbler />
             <h1 className="max-w-3xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-7xl" style={{ fontFamily: "Fredoka" }}>
-              Your school, <span className="text-orange">its own place</span> in the internet.
+              Your school, <span className="bg-lime px-3 rounded-xl box-decoration-break">its own place</span> in the internet.
             </h1>
             <p className="max-w-2xl text-lg leading-relaxed text-navy/75">
               Topos is the friendly home for admissions, families, stories and news of an international
@@ -232,7 +232,7 @@ export default function App() {
                 For your IT team
               </a>
             </div>
-            <p className="text-sm text-navy/55">free &amp; open (AGPL) · born at a real school in Chiang Mai · no credit card, ever, for the open edition</p>
+            <p className="text-sm text-navy/70">free &amp; open (AGPL) · born at a real school in Chiang Mai · no credit card, ever, for the open edition</p>
           </div>
         </section>
 
@@ -263,7 +263,7 @@ export default function App() {
         </Section>
 
         {/* THE GAME */}
-        <div className="bg-navy">
+        <div className="on-dark bg-navy">
           <Section id="fold" kicker="play with it" title="Watch your school fold — five choices, one live preview" className="text-cream [&_h2]:text-cream [&_p]:text-cream/80">
             <FoldGame />
           </Section>
@@ -278,7 +278,7 @@ export default function App() {
               ["AGPL-3.0", "The engine is free and stays free. You are not a tenant of someone’s platform — you are a co-author of a shared one."],
             ].map(([n, l]) => (
               <article key={n} className="clay rounded-clay bg-card p-7">
-                <p className="text-2xl font-bold text-orange" style={{ fontFamily: "Fredoka" }}>{n}</p>
+                <p className="text-2xl font-bold text-green" style={{ fontFamily: "Fredoka" }}>{n}</p>
                 <p className="mt-3 leading-relaxed text-navy/70">{l}</p>
               </article>
             ))}
@@ -320,7 +320,7 @@ export default function App() {
                 <li>Ages, materials, objectives</li>
                 <li>Written by practicing directors</li>
               </ul>
-              <p className="mt-6 text-sm font-bold text-navy/50">arriving with the second pilot school</p>
+              <p className="mt-6 text-sm font-bold text-navy/70">arriving with the second pilot school</p>
             </article>
           </div>
         </Section>
@@ -332,7 +332,7 @@ export default function App() {
               <details key={q} className="clay group rounded-clay bg-card px-6 py-4 [&_summary::-webkit-details-marker]:hidden">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 text-lg font-bold" style={{ fontFamily: "Fredoka" }}>
                   {q}
-                  <span aria-hidden className="text-orange transition-transform group-open:rotate-45 text-2xl font-normal">+</span>
+                  <span aria-hidden className="text-green transition-transform group-open:rotate-45 text-2xl font-normal">+</span>
                 </summary>
                 <p className="max-w-2xl pb-3 leading-relaxed text-navy/70">{a}</p>
               </details>
@@ -341,7 +341,7 @@ export default function App() {
         </Section>
 
         {/* UNDER THE HOOD — small, for the IT friend */}
-        <div className="border-t-4 border-navy bg-plum">
+        <div className="on-dark border-t-4 border-navy bg-plum">
           <Section id="geeks" kicker="for your IT friend" title="Under the hood, it’s three honest commands" className="[&_h2]:text-cream [&_p]:text-cream/75">
             <div className="mb-6 max-w-2xl text-cream/80">
               <p>The whole platform is one manifest, one validator and one folder of pages. If your developer friend wants the tour, it takes a minute — and the contract tests are public.</p>
@@ -351,7 +351,7 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="bg-navy text-cream">
+      <footer className="on-dark bg-navy text-cream">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-6 px-5 py-12 sm:flex-row">
           <div className="flex items-center gap-3">
             <svg viewBox="0 0 40 40" className="h-8 w-8" aria-hidden="true">

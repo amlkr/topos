@@ -46,10 +46,11 @@ body {
 ::selection { background: color-mix(in srgb, var(--color-lime) 70%, transparent); }
 
 :focus-visible {
-  outline: 3px solid var(--color-orange);
+  outline: 3px solid var(--color-navy);
   outline-offset: 3px;
   border-radius: 8px;
 }
+.on-dark :focus-visible { outline-color: var(--color-lime); }
 
 /* clay cards: fat soft shadow, squish on hover */
 .clay {
