@@ -1,0 +1,99 @@
+# Topos second example — a FICTIONAL school.
+# Aurora Terrace Academy does not exist; that is the point.
+# The contract must bend without the engine cracking, so every knob lotus
+# left at one setting is moved here on purpose:
+#   entity=course (not activity), groupsBy=level (not term),
+#   two locales [en, zh] (not three), mediaConsent=gdpr (not pdpa),
+#   proofs=false, marketingEngine=true, a warm amber/deep-brown palette,
+#   and one program whose price is decided internally but NOT published —
+#   families must never see a price on that program (the contract rule,
+#   exercised in the negative).
+apiVersion: topos/v0
+kind: School
+
+identity:
+  name: Aurora Terrace Academy
+  altName: "ATA · 晨曦书院"
+  tagline: Warm ground, wide sky
+  domain: aurora.example
+  defaultLocale: en
+  locales: [en, zh]
+
+brand:
+  palette:
+    brand: "#b45309"
+    brandDeep: "#432615"
+    sun: "#f4b942"
+    teal: "#8a9a5b"
+    ink: "#2a1f16"
+    paper: "#faf6ef"
+    shell: "#fffdf8"
+  fonts:
+    display: Newsreader
+    body: system
+
+topology:
+  entity: course
+  groupsBy: level
+  agesRange: "5-18"
+
+programs:
+  - code: AUR-CN-L1
+    name: Mandarin Foundations
+    place: Terrace House, ground floor
+    level: L1
+    ages: "5-7"
+    season: { starts: "2027-03-01", ends: "2027-06-25" }
+    price: { amount: 4800, currency: CNY, unit: term, published: true }
+    door: /enrol/AUR-CN-L1
+
+  - code: AUR-ASTRO-L3
+    name: Astronomy & Rocketry Lab
+    place: East Field observatory dome
+    level: L3
+    ages: "12-15"
+    season: { starts: "2027-07-05", ends: "2027-08-20" }
+    price: { amount: 8600, currency: CNY, unit: term, published: true, earlyBird: true, deadline: "2027-05-15" }
+    door: /enrol/AUR-ASTRO-L3
+
+  - code: AUR-CLAY-L2
+    name: Yunnan Textiles & Clay Studio
+    place: Old Kiln workshop, courtyard B
+    level: L2
+    ages: "8-11"
+    season: { starts: "2027-09-01", ends: "2027-12-18" }
+    # Price agreed internally but not published yet — the site must show none.
+    price: { amount: 5200, currency: CNY, unit: term, published: false }
+    door: /enrol/AUR-CLAY-L2
+
+  - code: AUR-ROBO-L4
+    name: Robotics Competitive Track
+    place: Valley Campus, maker shed 2
+    level: L4
+    ages: "14-18"
+    season: { starts: "2027-03-01", ends: "2027-11-26" }
+    price: { amount: 14400, currency: CNY, unit: year, published: true }
+    door: /enrol/AUR-ROBO-L4
+
+communication:
+  funnels:
+    - key: admissions
+      address: admissions@aurora.example
+      purpose: Places and enrolment
+    - key: general
+      address: hello@aurora.example
+      purpose: Everything else
+  phone: "+8600000000"
+  postalAddress: "No. 1 Cuihu Example Road, Wuhua District, Kunming, Yunnan 000000, China"
+
+content:
+  blog: true
+  mediaConsent: gdpr
+
+operations:
+  primitives: [persons, enrolments, payments, communication, content]
+  features:
+    dashboard: true
+    parentPortal: true
+    proofs: false
+    marketingEngine: true
