@@ -1,51 +1,79 @@
 @import "tailwindcss";
 
+/* Topos v2 — friendly school palette (owner, 2026-11-21).
+   Contrast pairs used for text were computed (WCAG):
+   navy #001433 on cream #EFEEEC ≈ 14.7 ✓ · navy on orange #FF7714 ≈ 6.4 ✓
+   navy on sky #3BD3FD ≈ 9.7 ✓ · navy on lime #EEF773 ≈ 13 ✓
+   cream on green #035D44 ≈ 7.0 ✓ · cream on plum #46022F ≈ 11.8 ✓
+   coral #FB4450 is reserved for large text/fills (navy on coral ≈ 4.8). */
+
 @theme {
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-body: "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --color-night: #0b0a14;
-  --color-surface: #131220;
-  --color-edge: #232136;
-  --color-mist: #a7a3c0;
-  --color-chalk: #f4f2fb;
-  --color-indigo-brand: #6366f1;
-  --color-indigo-mid: #4f46e5;
-  --color-indigo-deep: #4338ca;
-  --color-indigo-soft: #818cf8;
-  --color-emerald-cta: #10b981;
-  --color-emerald-soft: #34d399;
-  --color-amber-fold: #f4b942;
+  --color-cream: #efeeec;
+  --color-navy: #001433;
+  --color-orange: #ff7714;
+  --color-sky: #3bd3fd;
+  --color-lime: #eef773;
+  --color-coral: #fb4450;
+  --color-green: #035d44;
+  --color-plum: #46022f;
+  --color-card: #ffffff;
 
-  --radius-card: 1.25rem;
+  --radius-clay: 1.75rem;
 }
 
-html { scroll-behavior: smooth; color-scheme: dark; }
-section[id] { scroll-margin-top: 5rem; }
+html { scroll-behavior: smooth; color-scheme: light; }
+section[id] { scroll-margin-top: 6rem; }
 a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  .marquee-track { animation: none !important; }
+  .tumbler { animation: none !important; }
 }
 
 body {
-  background: var(--color-night);
-  color: var(--color-chalk);
-  font-family: var(--font-display);
+  background: var(--color-cream);
+  color: var(--color-navy);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: color-mix(in srgb, var(--color-indigo-brand) 45%, transparent); }
+::selection { background: color-mix(in srgb, var(--color-lime) 70%, transparent); }
 
 :focus-visible {
-  outline: 2px solid var(--color-emerald-soft);
+  outline: 3px solid var(--color-orange);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
-.fold-grid {
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--color-indigo-brand) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--color-indigo-brand) 8%, transparent) 1px, transparent 1px);
-  background-size: 44px 44px;
+/* clay cards: fat soft shadow, squish on hover */
+.clay {
+  box-shadow: 0 10px 0 rgba(0, 20, 51, 0.08), 0 24px 48px rgba(0, 20, 51, 0.10);
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 240ms ease;
 }
+.clay:hover { transform: translateY(-4px) scale(1.012); }
+.clay:active { transform: translateY(1px) scale(0.99); }
+
+/* marquee (CSS only, pauses on hover/focus, stops under reduced motion) */
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 26s linear infinite; }
+.marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+
+/* the tumbler mascot wobbles like a roly-poly toy */
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-9deg); }
+  55% { transform: rotate(7deg); }
+  80% { transform: rotate(-3deg); }
+}
+.tumbler { transform-origin: 50% 92%; }
+.tumbler:hover, .tumbler:focus-visible, .tumbler.wobbling { animation: wobble 900ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.blob-float { animation: blob 9s ease-in-out infinite alternate; }
+@keyframes blob { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-14px) rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) { .blob-float { animation: none; } }
